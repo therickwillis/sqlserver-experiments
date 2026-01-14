@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: ${CONTAINER_NAME}
+    # Helps SQLPAL initialize correctly
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    privileged: true
+    user: root
+    restart: always
+    ports:
+      - "${EXTERNAL_PORT}:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${PASSWORD}
+      - MSSQL_PID=Developer
+    volumes:
+      - mssql_data:/var/opt/mssql
+
+volumes:
+  mssql_data:
