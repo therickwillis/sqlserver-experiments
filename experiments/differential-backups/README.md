@@ -1,8 +1,10 @@
-# Get a SQL Server running in a container
+# Differential Backups
 
-This a simple experiment to create an instance of SQL Server
+This a simple experiment to create an instance of SQL Server with 2 databases.  1 database will be the primary and the other will represent a DR copy.  Will Differential backups help solve timing issues with moving large databases?
 
 ## How it works
+
+Use the `./.env` file to change settings (like the password and port)
 
 `docker-compose up -d` to start the container
 
