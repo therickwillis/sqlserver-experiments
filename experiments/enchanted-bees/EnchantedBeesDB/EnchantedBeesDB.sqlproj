@@ -10,8 +10,8 @@
   <ItemGroup>
     <None Include=".vscode\tasks.json" />
     <None Include="EnchantedBeesDB_1.publish.xml" />
-    <None Include="scripts\SeedData\SeedSpecies.sql" />
-    <None Include="scripts\SeedData\SeedVariant.sql" />
+    <None Include="scripts\SeedData\SeedBeeVariant.sql" />
+    <None Include="scripts\SeedData\SeedSpeciesType.sql" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="scripts" />

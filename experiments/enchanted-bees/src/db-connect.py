@@ -71,8 +71,8 @@ if __name__ == "__main__":
         try:
                 print("Connected to EnchantedBeesDB on", conn.getinfo(pyodbc.SQL_SERVER_NAME))
                 
-                get_table_count(conn, "Species")
-                get_table_count(conn, "Variant")
+                get_table_count(conn, "SpeciesType")
+                get_table_count(conn, "BeeVariant")
                 get_table_count(conn, "MatingPair")
                 get_table_count(conn, "MatingBaby")
         finally:
