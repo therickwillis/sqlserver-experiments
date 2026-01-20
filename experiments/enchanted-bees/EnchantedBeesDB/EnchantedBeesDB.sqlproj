@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build">
+  <Sdk Name="Microsoft.Build.Sql" Version="2.0.0" />
+  <PropertyGroup>
+    <Name>EnchantedBees</Name>
+    <ProjectGuid>{5AD4A3C0-0ACF-44C6-BD46-1D56B01D383A}</ProjectGuid>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql160DatabaseSchemaProvider</DSP>
+    <ModelCollation>1033, CI</ModelCollation>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include=".vscode\tasks.json" />
+    <None Include="EnchantedBeesDB_1.publish.xml" />
+    <None Include="scripts\SeedData\SeedSpecies.sql" />
+    <None Include="scripts\SeedData\SeedVariant.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="scripts" />
+    <Folder Include="scripts\SeedData" />
+    <Folder Include="Tables" />
+  </ItemGroup>
+  <ItemGroup>
+    <PostDeploy Include="scripts\Script.PostDeployment.sql" />
+  </ItemGroup>
+  <Target Name="BeforeBuild">
+    <Delete Files="$(BaseIntermediateOutputPath)\project.assets.json" />
+  </Target>
+</Project>
