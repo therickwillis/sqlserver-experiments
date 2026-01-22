@@ -1,0 +1,29 @@
+{
+  "name": "Enchanted Bees Dev",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "dev",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+  "build": {
+    "args": {
+      "USER_ID": "${localEnv:USER_ID}",
+      "GROUP_ID": "${localEnv:GROUP_ID}"
+    }
+  },
+  "containerEnv": {
+    "DEV_MODE": "1"
+  },
+  "remoteUser": "dev",
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-azuretools.vscode-docker",
+    "ms-dotnettools.csharp",
+    "ms-mssql.mssql"
+  ],
+  "postCreateCommand": "python3 -m pip install --user -r src/requirements.txt || true",
+  "postStartCommand": "echo 'Database will be auto-published via dev-entrypoint.sh when SQL Server is ready.'",
+  "forwardPorts": [5000, 1433]
+}

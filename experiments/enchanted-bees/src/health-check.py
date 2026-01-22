@@ -34,7 +34,7 @@ def get_connection():
         Return a pyodbc.Connection to the EnchantedBeesDB.
         Caller is responsible for closing the connection.
         """
-        server = os.environ.get("DB_SERVER", "localhost")
+        server = os.environ.get("DB_SERVER", "sqlserver")
         database = os.environ.get("DB_DATABASE", "EnchantedBeesDB")
         user = os.environ.get("DB_USER")
         password = os.environ.get("DB_PASSWORD")
@@ -55,6 +55,7 @@ def get_connection():
                         f"SERVER={server};DATABASE={database};Trusted_Connection=yes;"
                 )
 
+        print("Using Connection string:", conn_str)
         return pyodbc.connect(conn_str)
 
 def get_table_count(conn, table_name):

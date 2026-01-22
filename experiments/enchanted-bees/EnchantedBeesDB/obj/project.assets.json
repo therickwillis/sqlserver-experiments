@@ -8,19 +8,19 @@
     ".NETStandard,Version=v2.1": []
   },
   "packageFolders": {
-    "C:\\Users\\theri\\.nuget\\packages\\": {}
+    "/home/dev/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "f:\\repos\\sqlserver-experiments\\experiments\\enchanted-bees\\EnchantedBeesDB\\EnchantedBeesDB.sqlproj",
+      "projectUniqueName": "/workspace/EnchantedBeesDB/EnchantedBeesDB.sqlproj",
       "projectName": "EnchantedBeesDB",
-      "projectPath": "f:\\repos\\sqlserver-experiments\\experiments\\enchanted-bees\\EnchantedBeesDB\\EnchantedBeesDB.sqlproj",
-      "packagesPath": "C:\\Users\\theri\\.nuget\\packages\\",
-      "outputPath": "f:\\repos\\sqlserver-experiments\\experiments\\enchanted-bees\\EnchantedBeesDB\\obj\\",
+      "projectPath": "/workspace/EnchantedBeesDB/EnchantedBeesDB.sqlproj",
+      "packagesPath": "/home/dev/.nuget/packages/",
+      "outputPath": "/workspace/EnchantedBeesDB/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\theri\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "/home/dev/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "netstandard2.1"
@@ -43,8 +43,7 @@
         "enableAudit": "true",
         "auditLevel": "low",
         "auditMode": "direct"
-      },
-      "SdkAnalysisLevel": "10.0.100"
+      }
     },
     "frameworks": {
       "netstandard2.1": {
@@ -60,7 +59,7 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.417/RuntimeIdentifierGraph.json"
       }
     }
   }

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "rv3ECPq5A4A=",
+  "dgSpecHash": "WMzjx8V2qpo=",
   "success": true,
-  "projectFilePath": "f:\\repos\\sqlserver-experiments\\experiments\\enchanted-bees\\EnchantedBeesDB\\EnchantedBeesDB.sqlproj",
+  "projectFilePath": "/workspace/EnchantedBeesDB/EnchantedBeesDB.sqlproj",
   "expectedPackageFiles": [],
   "logs": []
 }
