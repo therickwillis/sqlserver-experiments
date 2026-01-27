@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install system packages including Python and pip
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       python3 python3-pip python3-distutils git curl ca-certificates apt-transport-https gnupg lsb-release locales procps sudo gnupg2 dirmngr unixodbc unixodbc-dev \
+       python3 python3-pip python3-distutils git curl ca-certificates apt-transport-https gnupg lsb-release locales procps sudo gnupg2 dirmngr unixodbc unixodbc-dev bzip2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Microsoft ODBC and mssql-tools (sqlcmd) - architecture-aware
@@ -28,8 +28,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
         apt-get update && \
         apt-get install -y --no-install-recommends tdsodbc freetds-bin freetds-common && \
         rm -rf /var/lib/apt/lists/* && \
-        GOSQLCMD_VERSION="1.8.0" && \
-        curl -fsSL "https://github.com/microsoft/go-sqlcmd/releases/download/v${GOSQLCMD_VERSION}/sqlcmd-v${GOSQLCMD_VERSION}-linux-arm64.tar.bz2" -o /tmp/sqlcmd.tar.bz2 && \
+        GOSQLCMD_VERSION="1.9.0" && \
+        curl -fsSL "https://github.com/microsoft/go-sqlcmd/releases/download/v${GOSQLCMD_VERSION}/sqlcmd-linux-arm64.tar.bz2" -o /tmp/sqlcmd.tar.bz2 && \
         tar -xjf /tmp/sqlcmd.tar.bz2 -C /usr/local/bin && \
         chmod +x /usr/local/bin/sqlcmd && \
         rm /tmp/sqlcmd.tar.bz2; \
