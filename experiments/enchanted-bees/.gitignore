@@ -37,3 +37,6 @@ Thumbs.db
 *.bak
 *.mdf
 *.ldf
+
+# dbctl working directory (baseline DACPACs)
+.dbctl/

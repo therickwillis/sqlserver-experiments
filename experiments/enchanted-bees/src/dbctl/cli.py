@@ -53,6 +53,42 @@ def info(ctx):
     info_command.info(ctx)
 
 
+@cli.command()
+@click.option('--project', '-p', default='EnchantedBeesDB/EnchantedBeesDB.sqlproj',
+              help='Path to SQL project file relative to workspace')
+@click.option('--configuration', '-c', default='Debug',
+              help='Build configuration (Debug/Release)')
+@click.option('--server', '-s', default=lambda: os.getenv('DB_SERVER', 'sqlserver'),
+              help='SQL Server hostname (default: $DB_SERVER or sqlserver)')
+@click.option('--database', '-d', default=lambda: os.getenv('DB_NAME', 'EnchantedBeesDB'),
+              help='Database name (default: $DB_NAME or EnchantedBeesDB)')
+@click.option('--user', '-u', default=lambda: os.getenv('DB_USER', 'sa'),
+              help='SQL Server username (default: $DB_USER or sa)')
+@click.option('--password', default=lambda: os.getenv('DB_PASSWORD', ''),
+              help='SQL Server password (default: $DB_PASSWORD)')
+@click.pass_context
+def init(ctx, project, configuration, server, database, user, password):
+    """Initialize and publish database to SQL Server"""
+    from .commands import init_command
+    init_command.init(ctx, project, configuration, server, database, user, password)
+
+
+@cli.command()
+@click.option('--project', '-p', default='EnchantedBeesDB/EnchantedBeesDB.sqlproj',
+              help='Path to SQL project file relative to workspace')
+@click.option('--configuration', '-c', default='Debug',
+              help='Build configuration (Debug/Release)')
+@click.option('--message', '-m', default=None,
+              help='Custom migration description (auto-generated if not provided)')
+@click.option('--init', is_flag=True,
+              help='Initialize baseline without generating migration')
+@click.pass_context
+def generate(ctx, project, configuration, message, init):
+    """Generate migration scripts from SQL project changes"""
+    from .commands import generate_command
+    generate_command.generate(ctx, project, configuration, message, init)
+
+
 def main():
     """Entry point for the CLI"""
     cli(obj={})

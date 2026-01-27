@@ -1,0 +1,17 @@
+-- =============================================
+-- Rollback Migration: 20260127050626_create_dbo_hive_alter_3_objects
+-- Generated: 2026-01-27T05:06:26.969629
+-- =============================================
+-- WARNING: This migration contains changes that cannot be automatically reversed.
+-- You must manually implement the rollback logic below.
+--
+-- Changes in this migration:
+--   - CREATE TABLE [DBO]_[HIVE]
+--   - ALTER TABLE [DBO]_[HIVE]
+--   - ALTER TABLE [DBO]_[HIVE]
+--   - ALTER TABLE [DBO]_[HIVE]
+--
+-- TODO: Implement rollback logic below
+-- =============================================
+
+-- Your rollback SQL here

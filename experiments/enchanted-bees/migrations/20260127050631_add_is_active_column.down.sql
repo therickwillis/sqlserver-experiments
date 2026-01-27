@@ -1,0 +1,16 @@
+-- =============================================
+-- Rollback Migration: 20260127050631_add_is_active_column
+-- Generated: 2026-01-27T05:06:31.834912
+-- =============================================
+-- WARNING: This migration contains changes that cannot be automatically reversed.
+-- You must manually implement the rollback logic below.
+--
+-- Changes in this migration:
+--   - ALTER TABLE [DBO]_[HIVE]
+--   - ALTER TABLE [DBO]_[HIVE]
+--   - ALTER TABLE [DBO]_[HIVE]
+--
+-- TODO: Implement rollback logic below
+-- =============================================
+
+-- Your rollback SQL here

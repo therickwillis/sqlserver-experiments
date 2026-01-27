@@ -57,16 +57,18 @@ Develop a turn-key solution for managing MSSQL databases from development to pro
 
 **Priority:** High (First major capability)
 
+**Status:** ✅ Complete (2026-01-27)
+
 ### User Stories
 
-- [ ] As a developer, I can run a containerized command to build my SQL project and generate a DACPAC
-- [ ] As a developer, I can run a containerized tool to compare DACPACs and detect schema changes
-- [ ] As a developer, I can auto-generate a timestamp-based migration script (UP) from detected changes
-- [ ] As a developer, I can generate rollback migrations (DOWN) when possible
-- [ ] As a developer, I can handle complex migrations (renames, data transformations) with templated scripts
-- [ ] As a developer, I can see a migration preview before generating files
-- [ ] As a developer, I can track which baseline DACPAC was used for each migration
-- [ ] As a developer, migration generation works identically on Windows, Mac, and Linux via containers
+- [x] As a developer, I can run a containerized command to build my SQL project and generate a DACPAC
+- [x] As a developer, I can run a containerized tool to compare DACPACs and detect schema changes
+- [x] As a developer, I can auto-generate a timestamp-based migration script (UP) from detected changes
+- [x] As a developer, I can generate rollback migrations (DOWN) when possible
+- [x] As a developer, I can handle complex migrations (renames, data transformations) with templated scripts
+- [x] As a developer, I can see a migration preview before generating files
+- [x] As a developer, I can track which baseline DACPAC was used for each migration
+- [x] As a developer, migration generation works identically on Windows, Mac, and Linux via containers
 
 ### Technical Notes
 
@@ -74,6 +76,16 @@ Develop a turn-key solution for managing MSSQL databases from development to pro
 - Timestamp format: `YYYYMMDDHHMMSS_description.sql` (e.g., `20260127143022_add_bee_species_table.sql`)
 - Store baseline DACPAC reference in migration metadata
 - Consider edge cases: column renames vs add/drop, table renames, etc.
+
+### Deliverables
+
+- ✅ `dbctl generate` command with auto-description and custom `-m` flag
+- ✅ Baseline DACPAC management in `.dbctl/baselines/`
+- ✅ Migration files with metadata headers (checksum, baseline reference, timestamp)
+- ✅ AUTO-generated DOWN migrations for reversible changes
+- ✅ Template DOWN migrations for complex changes requiring manual review
+- ✅ VS Code tasks for migration generation
+- ✅ Comprehensive test suite: [test-migrations.sh](../test-migrations.sh) (25 tests, 100% pass rate)
 
 ---
 
@@ -265,17 +277,18 @@ Develop a turn-key solution for managing MSSQL databases from development to pro
 
 ## Current Status
 
-**Active Epic:** Epic 1 - Migration Generation System
+**Active Epic:** Epic 2 - Migration Execution & Tracking
 
 **Completed Epics:**
 - ✅ Epic 0: Container Infrastructure (2026-01-27)
+- ✅ Epic 1: Migration Generation System (2026-01-27)
 
 **Next Steps:**
-1. Begin Epic 1: Migration Generation System
-   - Implement DACPAC comparison functionality
-   - Create migration script generation logic
-   - Build timestamp-based migration file naming
-2. Continue to Epic 2: Migration Execution & Tracking
+1. Begin Epic 2: Migration Execution & Tracking
+   - Implement `__MigrationsHistory` table
+   - Create `dbctl migrate` command to apply pending migrations
+   - Add migration validation and checksum verification
+   - Support transactional migration execution
 
 ---
 

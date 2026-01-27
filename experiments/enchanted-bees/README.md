@@ -28,8 +28,21 @@ This project uses Docker Compose to provide a consistent development environment
 
 1. Copy `.env.example` to `.env` and adjust settings if needed
 2. Start the environment: `docker-compose up -d`
-3. Access the dev container: `docker-compose exec dev bash`
-4. Use the `dbctl` CLI tool for database operations
+3. Initialize the database: `docker compose exec dev dbctl init`
+4. Access the dev container: `docker-compose exec dev bash`
+5. Use the `dbctl` CLI tool for database operations
+
+### dbctl Commands
+
+The `dbctl` CLI provides all database management operations:
+
+- `dbctl info` - Show environment and tooling information
+- `dbctl init` - Initialize and publish database to SQL Server
+- `dbctl build` - Build SQL project and generate DACPAC
+- `dbctl generate` - Generate migration scripts from schema changes
+- `dbctl status` - Show database and migration status
+
+Run tests: `./test.sh`
 
 ### Cross-Platform Architecture
 
@@ -42,6 +55,7 @@ Both environments maintain compatibility through careful feature selection and t
 ### Documentation
 
 - [Getting Started Guide](docs/GETTING_STARTED.md) - Detailed setup and usage instructions
+- [Testing Guide](docs/TESTING.md) - Test suite and quality assurance
 - [Architecture](docs/ARCHITECTURE.md) - Cross-platform design decisions and implementation details
 - [Development Container Setup](docs/DEV_CONTAINER.md) - Container environment details
 - [Project Backlog](docs/BACKLOG.md) - Feature roadmap and experiments

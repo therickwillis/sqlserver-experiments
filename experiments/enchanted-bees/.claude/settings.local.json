@@ -8,7 +8,10 @@
       "Bash(docker-compose config:*)",
       "Bash(docker-compose run --rm dev bash -c \"echo PATH=$PATH && which dotnet && which sqlpackage || echo ''sqlpackage not in PATH''\")",
       "Bash(docker-compose run:*)",
-      "Bash(docker-compose build:*)"
+      "Bash(docker-compose build:*)",
+      "Bash(./dbctl:*)",
+      "Bash(docker compose:*)",
+      "Bash(chmod:*)"
     ]
   }
 }
