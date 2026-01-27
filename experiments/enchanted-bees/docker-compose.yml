@@ -1,6 +1,7 @@
 services:
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    # Use Azure SQL Edge for ARM64 (Mac), SQL Server 2022 for AMD64 (Windows/Intel)
+    image: ${SQL_IMAGE:-mcr.microsoft.com/mssql/server:2022-latest}
     container_name: ${CONTAINER_NAME}
     # Helps SQLPAL initialize correctly
     cap_add:
@@ -15,7 +16,7 @@ services:
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=${PASSWORD}
-      - MSSQL_PID=Developer
+      - MSSQL_PID=${MSSQL_PID:-Developer}
     volumes:
       - mssql_data:/var/opt/mssql
   dev:
