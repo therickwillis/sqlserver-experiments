@@ -21,11 +21,11 @@ def _select_available_driver(preferred):
     available = []
   if preferred in available:
     return preferred, available
-  for choice in ("ODBC Driver 18 for SQL Server", "ODBC Driver 17 for SQL Server"):
+  for choice in ("ODBC Driver 18 for SQL Server", "ODBC Driver 17 for SQL Server", "FreeTDS"):
     if choice in available:
       return choice, available
   for d in available:
-    if d.startswith("ODBC Driver"):
+    if d.startswith("ODBC Driver") or d.startswith("FreeTDS"):
       return d, available
   if "SQL Server" in available:
     return "SQL Server", available

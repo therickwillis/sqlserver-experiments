@@ -22,6 +22,7 @@ def _select_driver():
                 "ODBC Driver 18 for SQL Server",
                 "ODBC Driver 17 for SQL Server",
                 "ODBC Driver 13 for SQL Server",
+                "FreeTDS",
                 "SQL Server"
         ):
                 if candidate in available:

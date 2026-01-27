@@ -7,17 +7,46 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install system packages including Python and pip
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       python3 python3-pip python3-distutils git curl ca-certificates apt-transport-https gnupg lsb-release locales procps sudo gnupg2 dirmngr \
+       python3 python3-pip python3-distutils git curl ca-certificates apt-transport-https gnupg lsb-release locales procps sudo gnupg2 dirmngr unixodbc unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Microsoft ODBC and mssql-tools (sqlcmd) using keyring (avoid apt-key)
-RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/microsoft.gpg \
-    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list \
-    && apt-get update \
-    && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 mssql-tools \
-    && ln -s /opt/mssql-tools/bin/sqlcmd /usr/local/bin/sqlcmd || true \
-    && ln -s /opt/mssql-tools/bin/bcp /usr/local/bin/bcp || true \
-    && rm -rf /var/lib/apt/lists/*
+# Install Microsoft ODBC and mssql-tools (sqlcmd) - architecture-aware
+# On x86_64: Install Microsoft's official ODBC driver and tools
+# On ARM64: Install go-sqlcmd and FreeTDS ODBC driver as alternatives
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+        echo "Installing Microsoft ODBC driver and tools for amd64..." && \
+        curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/microsoft.gpg && \
+        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list && \
+        apt-get update && \
+        ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 mssql-tools && \
+        ln -s /opt/mssql-tools/bin/sqlcmd /usr/local/bin/sqlcmd || true && \
+        ln -s /opt/mssql-tools/bin/bcp /usr/local/bin/bcp || true && \
+        rm -rf /var/lib/apt/lists/*; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        echo "Installing FreeTDS ODBC driver and go-sqlcmd for arm64..." && \
+        apt-get update && \
+        apt-get install -y --no-install-recommends tdsodbc freetds-bin freetds-common && \
+        rm -rf /var/lib/apt/lists/* && \
+        GOSQLCMD_VERSION="1.8.0" && \
+        curl -fsSL "https://github.com/microsoft/go-sqlcmd/releases/download/v${GOSQLCMD_VERSION}/sqlcmd-v${GOSQLCMD_VERSION}-linux-arm64.tar.bz2" -o /tmp/sqlcmd.tar.bz2 && \
+        tar -xjf /tmp/sqlcmd.tar.bz2 -C /usr/local/bin && \
+        chmod +x /usr/local/bin/sqlcmd && \
+        rm /tmp/sqlcmd.tar.bz2; \
+    else \
+        echo "Unsupported architecture: $ARCH" && exit 1; \
+    fi
+
+# Configure ODBC driver for pyodbc - architecture-aware
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "arm64" ]; then \
+        echo "Configuring FreeTDS ODBC driver for arm64..." && \
+        echo "[FreeTDS]" > /etc/odbcinst.ini && \
+        echo "Description = FreeTDS Driver" >> /etc/odbcinst.ini && \
+        echo "Driver = /usr/lib/aarch64-linux-gnu/odbc/libtdsodbc.so" >> /etc/odbcinst.ini && \
+        echo "Setup = /usr/lib/aarch64-linux-gnu/odbc/libtdsS.so" >> /etc/odbcinst.ini && \
+        echo "UsageCount = 1" >> /etc/odbcinst.ini; \
+    fi
 
 # Install Python tooling into the container image (no virtualenv used)
 # Ensure pip/setuptools/wheel are up-to-date for installs performed at build-time.
