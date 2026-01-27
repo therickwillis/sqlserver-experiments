@@ -19,6 +19,10 @@ RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor
     && ln -s /opt/mssql-tools/bin/bcp /usr/local/bin/bcp || true \
     && rm -rf /var/lib/apt/lists/*
 
+# Install sqlpackage as a dotnet global tool
+RUN dotnet tool install --global microsoft.sqlpackage
+ENV PATH="${PATH}:/root/.dotnet/tools"
+
 # Install Python tooling into the container image (no virtualenv used)
 # Ensure pip/setuptools/wheel are up-to-date for installs performed at build-time.
 # Use --break-system-packages so pip can upgrade system-managed packages in this image.
@@ -46,6 +50,7 @@ COPY dev-entrypoint.sh /usr/local/bin/dev-entrypoint.sh
 RUN chmod +x /usr/local/bin/dev-entrypoint.sh
 
 ENV HOME=/home/dev
+ENV PATH="${PATH}:/home/dev/.dotnet/tools"
 WORKDIR /workspace
 
 USER dev

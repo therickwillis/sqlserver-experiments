@@ -1,0 +1,23 @@
+# Ensure consistent line endings across all platforms
+* text=auto
+
+# Shell scripts must have LF line endings
+*.sh text eol=lf
+dbctl text eol=lf
+
+# Python files should have LF line endings
+*.py text eol=lf
+
+# Windows-specific files can have CRLF
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files
+*.dacpac binary
+*.dll binary
+*.exe binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary

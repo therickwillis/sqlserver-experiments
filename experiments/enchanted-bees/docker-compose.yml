@@ -30,7 +30,7 @@ services:
     tty: true
     volumes:
       - ./:/workspace
-    working_dir: /workspace/experiments/enchanted-bees
+    working_dir: /workspace
     environment:
       - DB_SERVER=sqlserver
       - DB_PORT=1433

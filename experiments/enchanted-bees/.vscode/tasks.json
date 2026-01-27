@@ -1,0 +1,56 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "dbctl: Info",
+            "type": "shell",
+            "command": "${workspaceFolder}/dbctl info",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "dbctl: Build",
+            "type": "shell",
+            "command": "${workspaceFolder}/dbctl build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "dbctl: Status",
+            "type": "shell",
+            "command": "${workspaceFolder}/dbctl status",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "dbctl: Build and Publish (Legacy)",
+            "type": "shell",
+            "command": "${workspaceFolder}/EnchantedBeesDB/publish_db.sh",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}

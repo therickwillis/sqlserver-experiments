@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(./dbctl build:*)",
+      "Bash(./dbctl status:*)",
+      "Bash(docker build:*)",
+      "Bash(docker-compose config:*)"
+    ]
+  }
+}
