@@ -1,2 +1,0 @@
-f:/repos/sqlserver-experiments/experiments/enchanted-bees/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac
-/workspace/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac
