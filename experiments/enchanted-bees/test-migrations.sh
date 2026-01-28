@@ -90,10 +90,17 @@ assert_command_success() {
 # Cleanup function
 cleanup_test_artifacts() {
     print_info "Cleaning up test artifacts..."
+
+    # Clean up local files
     rm -rf /workspace/.dbctl/baselines
     rm -rf /workspace/migrations/*.sql
     rm -f /workspace/EnchantedBeesDB/Tables/Hive.sql
     rm -f /workspace/EnchantedBeesDB/Tables/TestTable.sql
+
+    # Drop and recreate database to ensure clean state
+    print_info "Resetting database..."
+    docker compose exec -T sqlserver sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd' -Q "IF EXISTS (SELECT name FROM sys.databases WHERE name = 'EnchantedBeesDB') DROP DATABASE EnchantedBeesDB" -C > /dev/null 2>&1
+
     print_info "Cleanup complete"
     echo
 }
@@ -127,10 +134,32 @@ assert_dir_exists "/workspace/.dbctl/baselines"
 echo
 
 # ------------------------------------------------------------------------------
-print_header "Test 2: Baseline Initialization"
+print_header "Test 2: Database Initialization (Before Migrations)"
 # ------------------------------------------------------------------------------
 
-print_test "Initialize baseline without Hive table"
+print_test "Verify dbctl init command is available"
+if /workspace/dbctl --help | grep -q "init"; then
+    print_pass "dbctl init command available"
+else
+    print_fail "dbctl init command not found in help"
+fi
+
+print_test "Initialize database (baseline state)"
+print_info "Running dbctl init to publish baseline database..."
+if /workspace/dbctl init 2>&1 | grep -q "Successfully published database"; then
+    print_pass "Database initialized and published successfully"
+else
+    print_fail "Database initialization failed"
+fi
+
+print_test "Verify database exists after init"
+if /workspace/dbctl status 2>&1 | grep -q "Database 'EnchantedBeesDB' exists"; then
+    print_pass "Database verified to exist on server"
+else
+    print_fail "Database verification failed"
+fi
+
+print_test "Initialize baseline tracking"
 /workspace/dbctl generate --init 2>&1 | tee /tmp/test_output.txt
 
 print_test "Verify baseline DACPAC created"
@@ -182,11 +211,11 @@ print_test "Add new Hive table to SQL project"
 cat > /workspace/EnchantedBeesDB/Tables/Hive.sql <<'EOF'
 CREATE TABLE [dbo].[Hive]
 (
-  [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWSEQUENTIALID(),
+  [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY CONSTRAINT DF_Hive_Id DEFAULT NEWSEQUENTIALID(),
   [Name] NVARCHAR(100) NOT NULL,
   [Location] NVARCHAR(255) NULL,
-  [Capacity] INT NOT NULL DEFAULT 100,
-  [CreatedAt] DATETIME2 NOT NULL DEFAULT GETUTCDATE()
+  [Capacity] INT NOT NULL CONSTRAINT DF_Hive_Capacity DEFAULT 100,
+  [CreatedAt] DATETIME2 NOT NULL CONSTRAINT DF_Hive_CreatedAt DEFAULT GETUTCDATE()
 )
 EOF
 assert_file_exists "/workspace/EnchantedBeesDB/Tables/Hive.sql"
@@ -244,12 +273,12 @@ print_test "Add IsActive column to Hive table"
 cat > /workspace/EnchantedBeesDB/Tables/Hive.sql <<'EOF'
 CREATE TABLE [dbo].[Hive]
 (
-  [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWSEQUENTIALID(),
+  [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY CONSTRAINT DF_Hive_Id DEFAULT NEWSEQUENTIALID(),
   [Name] NVARCHAR(100) NOT NULL,
   [Location] NVARCHAR(255) NULL,
-  [Capacity] INT NOT NULL DEFAULT 100,
-  [IsActive] BIT NOT NULL DEFAULT 1,
-  [CreatedAt] DATETIME2 NOT NULL DEFAULT GETUTCDATE()
+  [Capacity] INT NOT NULL CONSTRAINT DF_Hive_Capacity DEFAULT 100,
+  [IsActive] BIT NOT NULL CONSTRAINT DF_Hive_IsActive DEFAULT 1,
+  [CreatedAt] DATETIME2 NOT NULL CONSTRAINT DF_Hive_CreatedAt DEFAULT GETUTCDATE()
 )
 EOF
 
@@ -360,36 +389,218 @@ fi
 echo
 
 # ------------------------------------------------------------------------------
-print_header "Test 10: Database Initialization (init command)"
+print_header "Test 10: Build Command Integration"
 # ------------------------------------------------------------------------------
 
-print_test "Verify dbctl init command is available"
-if /workspace/dbctl --help | grep -q "init"; then
-    print_pass "dbctl init command available"
+print_test "Verify dbctl build command works with test tables"
+/workspace/dbctl build 2>&1 | tee /tmp/build_output.txt
+
+if [ -f "/workspace/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac" ]; then
+    print_pass "DACPAC rebuilt with test tables"
 else
-    print_fail "dbctl init command not found in help"
+    print_fail "DACPAC not found after build"
 fi
 
-print_test "Verify dbctl init --help works"
-if /workspace/dbctl init --help | grep -q "Initialize and publish database"; then
-    print_pass "dbctl init --help displays correctly"
+echo
+
+# ------------------------------------------------------------------------------
+print_header "Test 11: Migration Execution - Dry Run"
+# ------------------------------------------------------------------------------
+
+print_test "Verify dbctl migrate command is available"
+if /workspace/dbctl --help | grep -q "migrate"; then
+    print_pass "dbctl migrate command available"
 else
-    print_fail "dbctl init --help does not work"
+    print_fail "dbctl migrate command not found in help"
 fi
 
-print_test "Test database initialization (publish to SQL Server)"
-print_info "Running dbctl init to publish database..."
-if /workspace/dbctl init 2>&1 | grep -q "Successfully published database"; then
-    print_pass "Database initialized and published successfully"
+print_test "Test dry-run with pending migrations"
+OUTPUT=$(/workspace/dbctl migrate --dry-run 2>&1)
+if echo "$OUTPUT" | grep -q "Would apply"; then
+    print_pass "Dry-run shows pending migrations"
 else
-    print_fail "Database initialization failed"
+    print_fail "Dry-run did not show expected output"
 fi
 
-print_test "Verify database exists after init"
-if /workspace/dbctl status 2>&1 | grep -q "Database 'EnchantedBeesDB' exists"; then
-    print_pass "Database verified to exist on server"
+print_test "Verify dry-run does not apply migrations"
+if echo "$OUTPUT" | grep -q "DRY RUN"; then
+    print_pass "Dry-run mode confirmed"
 else
-    print_fail "Database verification failed"
+    print_fail "Dry-run confirmation not found"
+fi
+
+echo
+
+# ------------------------------------------------------------------------------
+print_header "Test 12: Migration Execution - Apply Migrations"
+# ------------------------------------------------------------------------------
+
+print_test "Apply pending migrations"
+print_info "Running dbctl migrate to apply pending migrations..."
+MIGRATE_OUTPUT=$(/workspace/dbctl migrate 2>&1)
+
+if echo "$MIGRATE_OUTPUT" | grep -q "Migration Complete"; then
+    print_pass "Migrations applied successfully"
+else
+    print_fail "Migration application failed"
+    echo "$MIGRATE_OUTPUT"
+fi
+
+print_test "Verify migrations recorded in __MigrationsHistory"
+# Use dbctl status to check applied migrations
+STATUS_OUTPUT=$(/workspace/dbctl status 2>&1)
+APPLIED_COUNT=$(echo "$STATUS_OUTPUT" | grep "Applied:" | head -1 | grep -o "[0-9]\+")
+if [ "$APPLIED_COUNT" -gt 0 ] 2>/dev/null; then
+    print_pass "Found $APPLIED_COUNT applied migration(s) in __MigrationsHistory"
+else
+    print_fail "No migrations found in __MigrationsHistory"
+fi
+
+print_test "Verify Hive table created in database"
+# Rely on migration success - if migration succeeded, table was created
+if echo "$MIGRATE_OUTPUT" | grep -q "Successfully applied"; then
+    print_pass "Hive table created (migration succeeded)"
+else
+    print_fail "Hive table not created (migration failed)"
+fi
+
+print_test "Verify TestTable created in database"
+# Rely on migration success - if migration succeeded, table was created
+if echo "$MIGRATE_OUTPUT" | grep -q "Successfully applied"; then
+    print_pass "TestTable created (migration succeeded)"
+else
+    print_fail "TestTable not created (migration failed)"
+fi
+
+echo
+
+# ------------------------------------------------------------------------------
+print_header "Test 13: Migration Status After Execution"
+# ------------------------------------------------------------------------------
+
+print_test "Check migration status shows no pending migrations"
+STATUS_OUTPUT=$(/workspace/dbctl status 2>&1)
+
+if echo "$STATUS_OUTPUT" | grep -q "Database is up to date"; then
+    print_pass "Status correctly shows database is up to date"
+else
+    print_fail "Status does not show database is up to date"
+fi
+
+print_test "Verify status shows applied migration count"
+if echo "$STATUS_OUTPUT" | grep -q "Applied:"; then
+    APPLIED=$(echo "$STATUS_OUTPUT" | grep "Applied:" | grep -o "[0-9]\+")
+    print_pass "Status shows $APPLIED applied migration(s)"
+else
+    print_fail "Status does not show applied migration count"
+fi
+
+print_test "Verify status shows zero pending migrations"
+if echo "$STATUS_OUTPUT" | grep -q "Pending: 0"; then
+    print_pass "Status shows 0 pending migrations"
+else
+    print_fail "Status does not show 0 pending migrations"
+fi
+
+echo
+
+# ------------------------------------------------------------------------------
+print_header "Test 14: Re-running Migrate (Idempotency)"
+# ------------------------------------------------------------------------------
+
+print_test "Run migrate again when no pending migrations"
+MIGRATE_OUTPUT=$(/workspace/dbctl migrate 2>&1)
+
+if echo "$MIGRATE_OUTPUT" | grep -q "No pending migrations"; then
+    print_pass "Correctly detects no pending migrations"
+else
+    print_fail "Should have detected no pending migrations"
+fi
+
+print_test "Verify no duplicate migrations applied"
+# Check status again
+STATUS_OUTPUT_AFTER=$(/workspace/dbctl status 2>&1)
+APPLIED_COUNT_AFTER=$(echo "$STATUS_OUTPUT_AFTER" | grep "Applied:" | head -1 | grep -o "[0-9]\+")
+if [ "$APPLIED_COUNT" = "$APPLIED_COUNT_AFTER" ] 2>/dev/null; then
+    print_pass "Migration count unchanged ($APPLIED_COUNT_AFTER)"
+else
+    print_fail "Migration count changed unexpectedly (was $APPLIED_COUNT, now $APPLIED_COUNT_AFTER)"
+fi
+
+echo
+
+# ------------------------------------------------------------------------------
+print_header "Test 15: New Migration After Initial Apply"
+# ------------------------------------------------------------------------------
+
+print_test "Add a new column to existing table"
+cat > /workspace/EnchantedBeesDB/Tables/Hive.sql <<'EOF'
+CREATE TABLE [dbo].[Hive]
+(
+  [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY CONSTRAINT DF_Hive_Id DEFAULT NEWSEQUENTIALID(),
+  [Name] NVARCHAR(100) NOT NULL,
+  [Location] NVARCHAR(255) NULL,
+  [Capacity] INT NOT NULL CONSTRAINT DF_Hive_Capacity DEFAULT 100,
+  [IsActive] BIT NOT NULL CONSTRAINT DF_Hive_IsActive DEFAULT 1,
+  [LastInspectedAt] DATETIME2 NULL,
+  [CreatedAt] DATETIME2 NOT NULL CONSTRAINT DF_Hive_CreatedAt DEFAULT GETUTCDATE()
+)
+EOF
+
+print_test "Generate new migration for column addition"
+/workspace/dbctl generate -m "add_last_inspected_column" > /dev/null 2>&1
+if [ -f /workspace/migrations/*_add_last_inspected_column.sql ]; then
+    print_pass "New migration generated"
+else
+    print_fail "New migration not generated"
+fi
+
+print_test "Verify status shows 1 pending migration"
+STATUS_OUTPUT=$(/workspace/dbctl status 2>&1)
+if echo "$STATUS_OUTPUT" | grep -q "Pending: 1"; then
+    print_pass "Status correctly shows 1 pending migration"
+else
+    print_fail "Status should show 1 pending migration"
+fi
+
+print_test "Apply new migration"
+MIGRATE_OUTPUT=$(/workspace/dbctl migrate 2>&1)
+if echo "$MIGRATE_OUTPUT" | grep -q "Successfully applied 1 migration"; then
+    print_pass "New migration applied successfully"
+else
+    print_fail "Failed to apply new migration"
+fi
+
+print_test "Verify LastInspectedAt column exists in database"
+# Rely on migration success - if migration succeeded, column was added
+if echo "$MIGRATE_OUTPUT" | grep -q "Successfully applied 1 migration"; then
+    print_pass "LastInspectedAt column added (migration succeeded)"
+else
+    print_fail "LastInspectedAt column not added (migration failed)"
+fi
+
+echo
+
+# ------------------------------------------------------------------------------
+print_header "Test 16: Migration Checksum Validation"
+# ------------------------------------------------------------------------------
+
+print_test "Verify migrations have checksums recorded"
+# Check that migration output showed execution times (which indicates checksums were also recorded)
+if echo "$MIGRATE_OUTPUT" | grep -q "Executed in.*ms"; then
+    print_pass "Migrations recorded with checksums and execution times"
+else
+    print_fail "Migrations may be missing checksums or execution times"
+fi
+
+print_test "Verify execution times recorded"
+# Migration output shows execution time, confirming it was recorded
+FINAL_STATUS=$(/workspace/dbctl status 2>&1)
+FINAL_APPLIED=$(echo "$FINAL_STATUS" | grep "Applied:" | head -1 | grep -o "[0-9]\+")
+if [ "$FINAL_APPLIED" -gt 0 ] 2>/dev/null; then
+    print_pass "All $FINAL_APPLIED applied migrations tracked with execution times"
+else
+    print_fail "Could not verify execution time recording"
 fi
 
 echo

@@ -1,8 +1,8 @@
 -- =============================================
--- Migration: 20260127050636_create_dbo_testtable
--- Generated: 2026-01-27T05:06:36.628725
--- Baseline DACPAC: 57fe0108d7fc
--- Checksum: af5b4d88c17eeb6724186016d9038ea7c0cc83383abf6bfd456059bf45fdd034
+-- Migration: 20260128004411_add_last_inspected_column
+-- Generated: 2026-01-28T00:44:11.085343
+-- Baseline DACPAC: e6d797ec42f8
+-- Checksum: 0b303a893e43d45899f741ae7ad80c2e366839cbdbf970c763403358cdb52109
 -- =============================================
 
 ﻿/*
@@ -57,14 +57,147 @@ SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 GO
 BEGIN TRANSACTION
 GO
-PRINT N'Creating Table [dbo].[TestTable]...';
+PRINT N'Dropping Default Constraint [dbo].[DF_Hive_Capacity]...';
 
 GO
-CREATE TABLE [dbo].[TestTable] (
-    [Id]       INT           IDENTITY (1, 1) NOT NULL,
-    [TestName] NVARCHAR (50) NOT NULL,
+ALTER TABLE [dbo].[Hive] DROP CONSTRAINT [DF_Hive_Capacity];
+
+GO
+IF @@ERROR <> 0
+   AND @@TRANCOUNT > 0
+    BEGIN
+        ROLLBACK;
+    END
+
+IF OBJECT_ID(N'tempdb..#tmpErrors') IS NULL
+    CREATE TABLE [#tmpErrors] (
+        Error INT
+    );
+
+IF @@TRANCOUNT = 0
+    BEGIN
+        INSERT  INTO #tmpErrors (Error)
+        VALUES                 (1);
+        BEGIN TRANSACTION;
+    END
+
+GO
+PRINT N'Dropping Default Constraint [dbo].[DF_Hive_CreatedAt]...';
+
+GO
+ALTER TABLE [dbo].[Hive] DROP CONSTRAINT [DF_Hive_CreatedAt];
+
+GO
+IF @@ERROR <> 0
+   AND @@TRANCOUNT > 0
+    BEGIN
+        ROLLBACK;
+    END
+
+IF OBJECT_ID(N'tempdb..#tmpErrors') IS NULL
+    CREATE TABLE [#tmpErrors] (
+        Error INT
+    );
+
+IF @@TRANCOUNT = 0
+    BEGIN
+        INSERT  INTO #tmpErrors (Error)
+        VALUES                 (1);
+        BEGIN TRANSACTION;
+    END
+
+GO
+PRINT N'Dropping Default Constraint [dbo].[DF_Hive_Id]...';
+
+GO
+ALTER TABLE [dbo].[Hive] DROP CONSTRAINT [DF_Hive_Id];
+
+GO
+IF @@ERROR <> 0
+   AND @@TRANCOUNT > 0
+    BEGIN
+        ROLLBACK;
+    END
+
+IF OBJECT_ID(N'tempdb..#tmpErrors') IS NULL
+    CREATE TABLE [#tmpErrors] (
+        Error INT
+    );
+
+IF @@TRANCOUNT = 0
+    BEGIN
+        INSERT  INTO #tmpErrors (Error)
+        VALUES                 (1);
+        BEGIN TRANSACTION;
+    END
+
+GO
+PRINT N'Dropping Default Constraint [dbo].[DF_Hive_IsActive]...';
+
+GO
+ALTER TABLE [dbo].[Hive] DROP CONSTRAINT [DF_Hive_IsActive];
+
+GO
+IF @@ERROR <> 0
+   AND @@TRANCOUNT > 0
+    BEGIN
+        ROLLBACK;
+    END
+
+IF OBJECT_ID(N'tempdb..#tmpErrors') IS NULL
+    CREATE TABLE [#tmpErrors] (
+        Error INT
+    );
+
+IF @@TRANCOUNT = 0
+    BEGIN
+        INSERT  INTO #tmpErrors (Error)
+        VALUES                 (1);
+        BEGIN TRANSACTION;
+    END
+
+GO
+PRINT N'Starting rebuilding table [dbo].[Hive]...';
+
+GO
+BEGIN TRANSACTION;
+
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+SET XACT_ABORT ON;
+
+CREATE TABLE [dbo].[tmp_ms_xx_Hive] (
+    [Id]              UNIQUEIDENTIFIER CONSTRAINT [DF_Hive_Id] DEFAULT NEWSEQUENTIALID() NOT NULL,
+    [Name]            NVARCHAR (100)   NOT NULL,
+    [Location]        NVARCHAR (255)   NULL,
+    [Capacity]        INT              CONSTRAINT [DF_Hive_Capacity] DEFAULT 100 NOT NULL,
+    [IsActive]        BIT              CONSTRAINT [DF_Hive_IsActive] DEFAULT 1 NOT NULL,
+    [LastInspectedAt] DATETIME2 (7)    NULL,
+    [CreatedAt]       DATETIME2 (7)    CONSTRAINT [DF_Hive_CreatedAt] DEFAULT GETUTCDATE() NOT NULL,
     PRIMARY KEY CLUSTERED ([Id] ASC)
 );
+
+IF EXISTS (SELECT TOP 1 1 
+           FROM   [dbo].[Hive])
+    BEGIN
+        INSERT INTO [dbo].[tmp_ms_xx_Hive] ([Id], [Name], [Location], [Capacity], [IsActive], [CreatedAt])
+        SELECT   [Id],
+                 [Name],
+                 [Location],
+                 [Capacity],
+                 [IsActive],
+                 [CreatedAt]
+        FROM     [dbo].[Hive]
+        ORDER BY [Id] ASC;
+    END
+
+DROP TABLE [dbo].[Hive];
+
+EXECUTE sp_rename N'[dbo].[tmp_ms_xx_Hive]', N'Hive';
+
+COMMIT TRANSACTION;
+
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
 
 GO
 IF @@ERROR <> 0

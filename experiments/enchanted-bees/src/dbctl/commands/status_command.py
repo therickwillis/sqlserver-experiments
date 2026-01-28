@@ -5,6 +5,8 @@ Status command - Show database and migration status
 import click
 import subprocess
 import os
+import pyodbc
+from pathlib import Path
 
 
 def status(ctx):
@@ -83,4 +85,44 @@ def status(ctx):
 
     click.echo()
     click.secho("Migrations:", fg="yellow")
-    click.echo("  Migration system not yet implemented (Epic 1)")
+
+    # Try to show migration status
+    try:
+        from ..migration_tracker import get_connection_string, get_applied_migrations
+        from ..migration_executor import discover_migrations, get_pending_migrations
+
+        workspace_root = ctx.obj.get('WORKSPACE_ROOT', Path('/workspace'))
+        migrations_dir = workspace_root / 'migrations'
+
+        # Connect to database
+        conn_string = get_connection_string(db_server, db_name, db_user, db_password)
+        conn = pyodbc.connect(conn_string, autocommit=True)
+
+        try:
+            # Get migration counts
+            all_migrations = discover_migrations(migrations_dir)
+            applied_migrations = get_applied_migrations(conn)
+            pending_migrations = get_pending_migrations(migrations_dir, conn)
+
+            click.echo(f"  Total migrations: {len(all_migrations)}")
+            click.echo(f"  Applied: {len(applied_migrations)}")
+            click.echo(f"  Pending: {len(pending_migrations)}")
+
+            if len(pending_migrations) > 0:
+                click.echo()
+                click.secho("  Next migrations to apply:", fg="yellow")
+                for mig in pending_migrations[:5]:  # Show first 5
+                    click.echo(f"    • {mig['migration_id']}")
+                if len(pending_migrations) > 5:
+                    click.echo(f"    ... and {len(pending_migrations) - 5} more")
+
+                click.echo()
+                click.secho("  Run 'dbctl migrate' to apply pending migrations", fg="cyan")
+            else:
+                click.secho("  ✓ Database is up to date!", fg="green")
+
+        finally:
+            conn.close()
+
+    except Exception as e:
+        click.echo(f"  Could not check migration status: {e}")

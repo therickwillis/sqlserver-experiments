@@ -89,6 +89,24 @@ def generate(ctx, project, configuration, message, init):
     generate_command.generate(ctx, project, configuration, message, init)
 
 
+@cli.command()
+@click.option('--server', '-s', default=lambda: os.getenv('DB_SERVER', 'sqlserver'),
+              help='SQL Server hostname (default: $DB_SERVER or sqlserver)')
+@click.option('--database', '-d', default=lambda: os.getenv('DB_NAME', 'EnchantedBeesDB'),
+              help='Database name (default: $DB_NAME or EnchantedBeesDB)')
+@click.option('--user', '-u', default=lambda: os.getenv('DB_USER', 'sa'),
+              help='SQL Server username (default: $DB_USER or sa)')
+@click.option('--password', default=lambda: os.getenv('DB_PASSWORD', ''),
+              help='SQL Server password (default: $DB_PASSWORD)')
+@click.option('--dry-run', is_flag=True,
+              help='Show pending migrations without applying them')
+@click.pass_context
+def migrate(ctx, server, database, user, password, dry_run):
+    """Apply pending migrations to database"""
+    from .commands import migrate_command
+    migrate_command.migrate(ctx, server, database, user, password, dry_run)
+
+
 def main():
     """Entry point for the CLI"""
     cli(obj={})

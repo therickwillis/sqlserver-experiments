@@ -40,6 +40,7 @@ The `dbctl` CLI provides all database management operations:
 - `dbctl init` - Initialize and publish database to SQL Server
 - `dbctl build` - Build SQL project and generate DACPAC
 - `dbctl generate` - Generate migration scripts from schema changes
+- `dbctl migrate` - Apply pending migrations to database
 - `dbctl status` - Show database and migration status
 
 Run tests: `./test.sh`

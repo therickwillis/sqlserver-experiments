@@ -1,8 +1,8 @@
 -- =============================================
--- Migration: 20260127050626_create_dbo_hive_alter_3_objects
--- Generated: 2026-01-27T05:06:26.969608
--- Baseline DACPAC: 915451065593
--- Checksum: 5260e69e81fc4de1d771e6a51a85c68bd621266c46b0ac956870f169d86d9d62
+-- Migration: 20260128004402_create_dbo_testtable
+-- Generated: 2026-01-28T00:44:02.964630
+-- Baseline DACPAC: 6a17cb40e1af
+-- Checksum: af5b4d88c17eeb6724186016d9038ea7c0cc83383abf6bfd456059bf45fdd034
 -- =============================================
 
 ﻿/*
@@ -57,95 +57,14 @@ SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 GO
 BEGIN TRANSACTION
 GO
-PRINT N'Creating Table [dbo].[Hive]...';
+PRINT N'Creating Table [dbo].[TestTable]...';
 
 GO
-CREATE TABLE [dbo].[Hive] (
-    [Id]        UNIQUEIDENTIFIER NOT NULL,
-    [Name]      NVARCHAR (100)   NOT NULL,
-    [Location]  NVARCHAR (255)   NULL,
-    [Capacity]  INT              NOT NULL,
-    [CreatedAt] DATETIME2 (7)    NOT NULL,
+CREATE TABLE [dbo].[TestTable] (
+    [Id]       INT           IDENTITY (1, 1) NOT NULL,
+    [TestName] NVARCHAR (50) NOT NULL,
     PRIMARY KEY CLUSTERED ([Id] ASC)
 );
-
-GO
-IF @@ERROR <> 0
-   AND @@TRANCOUNT > 0
-    BEGIN
-        ROLLBACK;
-    END
-
-IF OBJECT_ID(N'tempdb..#tmpErrors') IS NULL
-    CREATE TABLE [#tmpErrors] (
-        Error INT
-    );
-
-IF @@TRANCOUNT = 0
-    BEGIN
-        INSERT  INTO #tmpErrors (Error)
-        VALUES                 (1);
-        BEGIN TRANSACTION;
-    END
-
-GO
-PRINT N'Creating Default Constraint unnamed constraint on [dbo].[Hive]...';
-
-GO
-ALTER TABLE [dbo].[Hive]
-    ADD DEFAULT 100 FOR [Capacity];
-
-GO
-IF @@ERROR <> 0
-   AND @@TRANCOUNT > 0
-    BEGIN
-        ROLLBACK;
-    END
-
-IF OBJECT_ID(N'tempdb..#tmpErrors') IS NULL
-    CREATE TABLE [#tmpErrors] (
-        Error INT
-    );
-
-IF @@TRANCOUNT = 0
-    BEGIN
-        INSERT  INTO #tmpErrors (Error)
-        VALUES                 (1);
-        BEGIN TRANSACTION;
-    END
-
-GO
-PRINT N'Creating Default Constraint unnamed constraint on [dbo].[Hive]...';
-
-GO
-ALTER TABLE [dbo].[Hive]
-    ADD DEFAULT GETUTCDATE() FOR [CreatedAt];
-
-GO
-IF @@ERROR <> 0
-   AND @@TRANCOUNT > 0
-    BEGIN
-        ROLLBACK;
-    END
-
-IF OBJECT_ID(N'tempdb..#tmpErrors') IS NULL
-    CREATE TABLE [#tmpErrors] (
-        Error INT
-    );
-
-IF @@TRANCOUNT = 0
-    BEGIN
-        INSERT  INTO #tmpErrors (Error)
-        VALUES                 (1);
-        BEGIN TRANSACTION;
-    END
-
-GO
-PRINT N'Creating Default Constraint unnamed constraint on [dbo].[Hive]...';
-
-GO
-ALTER TABLE [dbo].[Hive]
-    ADD DEFAULT NEWSEQUENTIALID() FOR [Id];
 
 GO
 IF @@ERROR <> 0
