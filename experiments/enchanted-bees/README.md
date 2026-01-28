@@ -2,6 +2,28 @@
 
 A practical experiment in modern SQL Server development workflows, cross-platform tooling, and database project management.
 
+## At a Glance
+
+```mermaid
+flowchart TB
+    A["SQL Project"] -->|build| B["DACPAC"]
+    B -->|diff| C["Migration"]
+    C -->|checksum| D["Validate"]
+    D -->|apply| E["Database"]
+    E -->|record| F["Audit Log"]
+```
+
+| Developer Velocity | Production Safety |
+|-------------------|-------------------|
+| Cross-platform containers (ARM64/AMD64) | SHA256 checksum integrity |
+| Automatic migration generation | Application-level locking |
+| Hot-reload schema editing | Full audit trail |
+| Single CLI for all operations | Transaction-wrapped execution |
+
+**[See Full Technical Overview →](docs/OVERVIEW.md)** — Detailed architecture diagrams, migration sequences, and deployment pipeline
+
+---
+
 ## What This Project Is About
 
 This is a hands-on exploration of SQL Server Database Projects (SSDT) in a cross-platform development environment. The project tackles real-world challenges like:
@@ -55,6 +77,7 @@ Both environments maintain compatibility through careful feature selection and t
 
 ### Documentation
 
+- [Technical Overview](docs/OVERVIEW.md) - Architecture diagrams and workflow visuals for technical leaders
 - [Getting Started Guide](docs/GETTING_STARTED.md) - Detailed setup and usage instructions
 - [Testing Guide](docs/TESTING.md) - Test suite and quality assurance
 - [Architecture](docs/ARCHITECTURE.md) - Cross-platform design decisions and implementation details
