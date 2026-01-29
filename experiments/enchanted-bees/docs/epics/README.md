@@ -78,8 +78,8 @@ Epic 2 (Migration Execution & Tracking)
       │
       ✅ Complete: 2026-01-28
       │
-Epic 3 (Rollback Support)
-  └─ 🔜 Planned
+Epic 3 (Rollback & Testing Framework)
+  └─ 🔜 Next Up
 ```
 
 ## Quick Links
@@ -128,7 +128,7 @@ Both epics maintain **100% test coverage** using:
 
 ## Next Steps
 
-1. **Epic 3: Rollback Support** - Execute `.down.sql` migrations
-2. **Epic 4: CI/CD Integration** - GitHub Actions workflows
-3. **Epic 5: Multi-Environment** - Dev/staging/prod configuration
-4. **Epic 6: Migration History** - Query and analyze applied migrations
+1. **Epic 3: Rollback & Testing Framework** - Execute `.down.sql` migrations + automated testing
+2. **Epic 4: Environment Drift Detection** - Detect schema differences across environments
+3. **Epic 5: Developer Experience & Onboarding** - Polish, documentation, quick-start guide
+4. **Epic 6: CI/CD & Ephemeral Environments** - GitHub Actions, PR-based databases
