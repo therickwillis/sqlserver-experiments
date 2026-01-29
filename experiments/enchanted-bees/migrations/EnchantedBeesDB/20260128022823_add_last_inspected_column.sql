@@ -1,8 +1,8 @@
 -- =============================================
--- Migration: 20260128004358_add_is_active_column
--- Generated: 2026-01-28T00:43:58.198350
--- Baseline DACPAC: 75a75ec8df8a
--- Checksum: 2de03c5d74d570a3fcc78a678821bd8606f8bd7fc30b3ab843216160540a85ed
+-- Migration: 20260128022823_add_last_inspected_column
+-- Generated: 2026-01-28T02:28:23.645498
+-- Baseline DACPAC: 6487958471ff
+-- Checksum: 0b303a893e43d45899f741ae7ad80c2e366839cbdbf970c763403358cdb52109
 -- =============================================
 
 ﻿/*
@@ -132,6 +132,31 @@ IF @@TRANCOUNT = 0
     END
 
 GO
+PRINT N'Dropping Default Constraint [dbo].[DF_Hive_IsActive]...';
+
+GO
+ALTER TABLE [dbo].[Hive] DROP CONSTRAINT [DF_Hive_IsActive];
+
+GO
+IF @@ERROR <> 0
+   AND @@TRANCOUNT > 0
+    BEGIN
+        ROLLBACK;
+    END
+
+IF OBJECT_ID(N'tempdb..#tmpErrors') IS NULL
+    CREATE TABLE [#tmpErrors] (
+        Error INT
+    );
+
+IF @@TRANCOUNT = 0
+    BEGIN
+        INSERT  INTO #tmpErrors (Error)
+        VALUES                 (1);
+        BEGIN TRANSACTION;
+    END
+
+GO
 PRINT N'Starting rebuilding table [dbo].[Hive]...';
 
 GO
@@ -142,23 +167,25 @@ SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 SET XACT_ABORT ON;
 
 CREATE TABLE [dbo].[tmp_ms_xx_Hive] (
-    [Id]        UNIQUEIDENTIFIER CONSTRAINT [DF_Hive_Id] DEFAULT NEWSEQUENTIALID() NOT NULL,
-    [Name]      NVARCHAR (100)   NOT NULL,
-    [Location]  NVARCHAR (255)   NULL,
-    [Capacity]  INT              CONSTRAINT [DF_Hive_Capacity] DEFAULT 100 NOT NULL,
-    [IsActive]  BIT              CONSTRAINT [DF_Hive_IsActive] DEFAULT 1 NOT NULL,
-    [CreatedAt] DATETIME2 (7)    CONSTRAINT [DF_Hive_CreatedAt] DEFAULT GETUTCDATE() NOT NULL,
+    [Id]              UNIQUEIDENTIFIER CONSTRAINT [DF_Hive_Id] DEFAULT NEWSEQUENTIALID() NOT NULL,
+    [Name]            NVARCHAR (100)   NOT NULL,
+    [Location]        NVARCHAR (255)   NULL,
+    [Capacity]        INT              CONSTRAINT [DF_Hive_Capacity] DEFAULT 100 NOT NULL,
+    [IsActive]        BIT              CONSTRAINT [DF_Hive_IsActive] DEFAULT 1 NOT NULL,
+    [LastInspectedAt] DATETIME2 (7)    NULL,
+    [CreatedAt]       DATETIME2 (7)    CONSTRAINT [DF_Hive_CreatedAt] DEFAULT GETUTCDATE() NOT NULL,
     PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 IF EXISTS (SELECT TOP 1 1 
            FROM   [dbo].[Hive])
     BEGIN
-        INSERT INTO [dbo].[tmp_ms_xx_Hive] ([Id], [Name], [Location], [Capacity], [CreatedAt])
+        INSERT INTO [dbo].[tmp_ms_xx_Hive] ([Id], [Name], [Location], [Capacity], [IsActive], [CreatedAt])
         SELECT   [Id],
                  [Name],
                  [Location],
                  [Capacity],
+                 [IsActive],
                  [CreatedAt]
         FROM     [dbo].[Hive]
         ORDER BY [Id] ASC;

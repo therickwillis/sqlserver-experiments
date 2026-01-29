@@ -33,7 +33,7 @@ def migrate(ctx, server: str, database: str, user: str, password: str, dry_run: 
     With --dry-run, shows pending migrations without applying them.
     """
     workspace_root = ctx.obj['WORKSPACE_ROOT']
-    migrations_dir = workspace_root / 'migrations'
+    migrations_dir = workspace_root / 'migrations' / database
 
     click.secho("=" * 60, fg="cyan")
     click.secho("  Database Migration", fg="cyan", bold=True)

@@ -92,7 +92,7 @@ def status(ctx):
         from ..migration_executor import discover_migrations, get_pending_migrations
 
         workspace_root = ctx.obj.get('WORKSPACE_ROOT', Path('/workspace'))
-        migrations_dir = workspace_root / 'migrations'
+        migrations_dir = workspace_root / 'migrations' / db_name
 
         # Connect to database
         conn_string = get_connection_string(db_server, db_name, db_user, db_password)

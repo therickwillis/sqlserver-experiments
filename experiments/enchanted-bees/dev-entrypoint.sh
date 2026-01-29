@@ -18,10 +18,10 @@ if [ "${DEV_MODE}" = "1" ]; then
   fi
 
   # Auto-publish database on startup
-  if [ -f /workspace/EnchantedBeesDB/publish_db.sh ]; then
+  if [ -f /workspace/databases/EnchantedBeesDB/publish_db.sh ]; then
     echo "DEV_MODE=1: waiting 60 seconds for SQL Server, then publishing database..."
     sleep 60
-    /workspace/EnchantedBeesDB/publish_db.sh
+    /workspace/databases/EnchantedBeesDB/publish_db.sh
   fi
 fi
 

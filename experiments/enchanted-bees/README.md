@@ -1,6 +1,6 @@
-# Enchanted Bees
+# dbctl
 
-A practical experiment in modern SQL Server development workflows, cross-platform tooling, and database project management.
+A modern approach to SQL Server database development that prioritizes both **developer velocity** and **production safety**.
 
 ## At a Glance
 
@@ -33,7 +33,7 @@ This is a hands-on exploration of SQL Server Database Projects (SSDT) in a cross
 * **Development tooling** - Building CLI tools for database operations and automation
 * **Modern DevOps practices** - Containerized development environments with Docker Compose
 
-The example database (managing data for an Ark mod's bee genetics system) provides a fun, realistic use case with interesting relational data patterns - but the real focus is learning and refining the development workflow itself.
+The tooling supports managing multiple database projects on the same server, each with independent migration tracking.
 
 ## Key Technologies
 

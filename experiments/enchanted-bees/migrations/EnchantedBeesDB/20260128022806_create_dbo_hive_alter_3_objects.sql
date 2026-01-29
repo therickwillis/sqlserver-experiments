@@ -1,7 +1,7 @@
 -- =============================================
--- Migration: 20260128004353_create_dbo_hive_alter_3_objects
--- Generated: 2026-01-28T00:43:53.285609
--- Baseline DACPAC: 0805cc25ec65
+-- Migration: 20260128022806_create_dbo_hive_alter_3_objects
+-- Generated: 2026-01-28T02:28:06.707620
+-- Baseline DACPAC: 6fdf880eb504
 -- Checksum: 3125ab584c83d575058787b03fc7022c47d9276825bd7e00d550780f100cacc6
 -- =============================================
 

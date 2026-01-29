@@ -44,7 +44,7 @@ def generate(ctx, project: str, configuration: str, message: Optional[str], init
     # Paths
     project_dir = project_path.parent
     project_name = project_path.stem
-    migrations_dir = workspace_root / 'migrations'
+    migrations_dir = workspace_root / 'migrations' / project_name
     baseline_dir = workspace_root / '.dbctl' / 'baselines'
     dacpac_path = project_dir / 'bin' / configuration / f'{project_name}.dacpac'
 

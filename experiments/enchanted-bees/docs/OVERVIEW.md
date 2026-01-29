@@ -39,7 +39,7 @@ graph TB
         end
 
         subgraph sql["sqlserver container"]
-            db[("EnchantedBeesDB")]
+            db[("databases")]
         end
     end
 
@@ -101,10 +101,10 @@ flowchart LR
 
 | Artifact | Purpose | Location |
 |----------|---------|----------|
-| SQL Project | Source of truth for schema | `EnchantedBeesDB/` |
-| DACPAC | Compiled, portable schema | `EnchantedBeesDB/bin/Debug/` |
+| SQL Project | Source of truth for schema | `databases/<name>/` |
+| DACPAC | Compiled, portable schema | `databases/<name>/bin/Debug/` |
 | Baseline DACPAC | Previous schema snapshot | `.dbctl/baselines/` |
-| Migration Scripts | Executable change scripts | `migrations/` |
+| Migration Scripts | Executable change scripts | `migrations/<name>/` |
 
 ---
 
@@ -193,20 +193,20 @@ sequenceDiagram
 
 ```
 project/
-├── databases/                # Database Projects
-|   └── CustomerDB/           # SQL Database Project (source of truth)
-│      ├── Tables/            # Table definitions
-│      └── CustomerDB.sqlproj
-|   └── ProductDB/            # SQL Database Project (source of truth)
-│      ├── Tables/            # Table definitions
-│      └── ProductDB.sqlproj
-├── migrations/               # Generated migration scripts
-|   └── CustomerDB/
-|   └── ProductDB/
+├── databases/                    # SQL Database Projects
+│   ├── CustomerDB/
+│   │   ├── Tables/
+│   │   └── CustomerDB.sqlproj
+│   └── ProductDB/
+│       ├── Tables/
+│       └── ProductDB.sqlproj
+├── migrations/                   # Generated migration scripts
+│   ├── CustomerDB/
+│   └── ProductDB/
 ├── .dbctl/
-│   └── baselines/            # DACPAC snapshots for diff comparison
-├── src/dbctl/                # CLI tool source
-└── docs/                     # Documentation
+│   └── baselines/                # DACPAC snapshots for diff
+├── src/dbctl/                    # CLI tool source
+└── docs/
 ```
 
 ---

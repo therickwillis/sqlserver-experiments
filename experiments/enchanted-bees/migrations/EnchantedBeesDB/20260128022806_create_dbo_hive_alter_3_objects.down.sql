@@ -1,6 +1,6 @@
 -- =============================================
--- Rollback Migration: 20260128004353_create_dbo_hive_alter_3_objects
--- Generated: 2026-01-28T00:43:53.285638
+-- Rollback Migration: 20260128022806_create_dbo_hive_alter_3_objects
+-- Generated: 2026-01-28T02:28:06.707652
 -- =============================================
 -- WARNING: This migration contains changes that cannot be automatically reversed.
 -- You must manually implement the rollback logic below.

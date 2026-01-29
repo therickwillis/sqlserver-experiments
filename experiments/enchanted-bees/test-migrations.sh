@@ -93,9 +93,9 @@ cleanup_test_artifacts() {
 
     # Clean up local files
     rm -rf /workspace/.dbctl/baselines
-    rm -rf /workspace/migrations/*.sql
-    rm -f /workspace/EnchantedBeesDB/Tables/Hive.sql
-    rm -f /workspace/EnchantedBeesDB/Tables/TestTable.sql
+    rm -rf /workspace/migrations/EnchantedBeesDB/*.sql
+    rm -f /workspace/databases/EnchantedBeesDB/Tables/Hive.sql
+    rm -f /workspace/databases/EnchantedBeesDB/Tables/TestTable.sql
 
     # Drop and recreate database to ensure clean state
     print_info "Resetting database..."
@@ -194,7 +194,7 @@ else
 fi
 
 print_test "Verify no migration files created"
-MIGRATION_COUNT=$(ls -1 /workspace/migrations/*.sql 2>/dev/null | wc -l)
+MIGRATION_COUNT=$(ls -1 /workspace/migrations/EnchantedBeesDB/*.sql 2>/dev/null | wc -l)
 if [ "$MIGRATION_COUNT" -eq 0 ]; then
     print_pass "No migration files created (count: $MIGRATION_COUNT)"
 else
@@ -208,7 +208,7 @@ print_header "Test 4: Create Table Migration (Auto Description)"
 # ------------------------------------------------------------------------------
 
 print_test "Add new Hive table to SQL project"
-cat > /workspace/EnchantedBeesDB/Tables/Hive.sql <<'EOF'
+cat > /workspace/databases/EnchantedBeesDB/Tables/Hive.sql <<'EOF'
 CREATE TABLE [dbo].[Hive]
 (
   [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY CONSTRAINT DF_Hive_Id DEFAULT NEWSEQUENTIALID(),
@@ -218,13 +218,13 @@ CREATE TABLE [dbo].[Hive]
   [CreatedAt] DATETIME2 NOT NULL CONSTRAINT DF_Hive_CreatedAt DEFAULT GETUTCDATE()
 )
 EOF
-assert_file_exists "/workspace/EnchantedBeesDB/Tables/Hive.sql"
+assert_file_exists "/workspace/databases/EnchantedBeesDB/Tables/Hive.sql"
 
 print_test "Generate migration with auto-description"
 /workspace/dbctl generate 2>&1 | tee /tmp/test_output.txt
 
 print_test "Verify migration files created"
-MIGRATION_COUNT=$(ls -1 /workspace/migrations/*_*.sql 2>/dev/null | grep -v ".down.sql" | wc -l)
+MIGRATION_COUNT=$(ls -1 /workspace/migrations/EnchantedBeesDB/*_*.sql 2>/dev/null | grep -v ".down.sql" | wc -l)
 if [ "$MIGRATION_COUNT" -eq 1 ]; then
     print_pass "Migration UP file created (count: $MIGRATION_COUNT)"
 else
@@ -239,7 +239,7 @@ else
 fi
 
 print_test "Verify migration filename format (timestamp_description.sql)"
-MIGRATION_FILE=$(ls -1 /workspace/migrations/*_*.sql 2>/dev/null | grep -v ".down.sql" | head -1)
+MIGRATION_FILE=$(ls -1 /workspace/migrations/EnchantedBeesDB/*_*.sql 2>/dev/null | grep -v ".down.sql" | head -1)
 if [[ "$(basename $MIGRATION_FILE)" =~ ^[0-9]{14}_[a-z0-9_]+\.sql$ ]]; then
     print_pass "Migration filename format correct: $(basename $MIGRATION_FILE)"
 else
@@ -270,7 +270,7 @@ print_header "Test 5: Alter Table Migration (Custom Description)"
 # ------------------------------------------------------------------------------
 
 print_test "Add IsActive column to Hive table"
-cat > /workspace/EnchantedBeesDB/Tables/Hive.sql <<'EOF'
+cat > /workspace/databases/EnchantedBeesDB/Tables/Hive.sql <<'EOF'
 CREATE TABLE [dbo].[Hive]
 (
   [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY CONSTRAINT DF_Hive_Id DEFAULT NEWSEQUENTIALID(),
@@ -286,7 +286,7 @@ print_test "Generate migration with custom description"
 /workspace/dbctl generate -m "add_is_active_column" 2>&1 | tee /tmp/test_output.txt
 
 print_test "Verify custom description used in filename"
-CUSTOM_MIGRATION=$(ls -1 /workspace/migrations/*_add_is_active_column.sql 2>/dev/null | head -1)
+CUSTOM_MIGRATION=$(ls -1 /workspace/migrations/EnchantedBeesDB/*_add_is_active_column.sql 2>/dev/null | head -1)
 if [ -f "$CUSTOM_MIGRATION" ]; then
     print_pass "Migration with custom description created: $(basename $CUSTOM_MIGRATION)"
 else
@@ -331,7 +331,7 @@ print_header "Test 7: Multiple Table Creation"
 # ------------------------------------------------------------------------------
 
 print_test "Add another test table"
-cat > /workspace/EnchantedBeesDB/Tables/TestTable.sql <<'EOF'
+cat > /workspace/databases/EnchantedBeesDB/Tables/TestTable.sql <<'EOF'
 CREATE TABLE [dbo].[TestTable]
 (
   [Id] INT NOT NULL PRIMARY KEY IDENTITY(1,1),
@@ -343,7 +343,7 @@ print_test "Generate migration for multiple changes"
 /workspace/dbctl generate 2>&1 | tee /tmp/test_output.txt
 
 print_test "Verify migration auto-description reflects multiple changes"
-LATEST_MIGRATION=$(ls -1t /workspace/migrations/*_*.sql 2>/dev/null | grep -v ".down.sql" | head -1)
+LATEST_MIGRATION=$(ls -1t /workspace/migrations/EnchantedBeesDB/*_*.sql 2>/dev/null | grep -v ".down.sql" | head -1)
 MIGRATION_NAME=$(basename "$LATEST_MIGRATION" .sql)
 if echo "$MIGRATION_NAME" | grep -qi "create\|table\|test"; then
     print_pass "Migration description reflects changes: $MIGRATION_NAME"
@@ -380,7 +380,7 @@ print_header "Test 9: Build Integration"
 print_test "Verify dbctl build command still works"
 /workspace/dbctl build 2>&1 | tee /tmp/build_output.txt
 
-if [ -f "/workspace/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac" ]; then
+if [ -f "/workspace/databases/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac" ]; then
     print_pass "DACPAC built successfully"
 else
     print_fail "DACPAC not found after build"
@@ -395,7 +395,7 @@ print_header "Test 10: Build Command Integration"
 print_test "Verify dbctl build command works with test tables"
 /workspace/dbctl build 2>&1 | tee /tmp/build_output.txt
 
-if [ -f "/workspace/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac" ]; then
+if [ -f "/workspace/databases/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac" ]; then
     print_pass "DACPAC rebuilt with test tables"
 else
     print_fail "DACPAC not found after build"
@@ -534,7 +534,7 @@ print_header "Test 15: New Migration After Initial Apply"
 # ------------------------------------------------------------------------------
 
 print_test "Add a new column to existing table"
-cat > /workspace/EnchantedBeesDB/Tables/Hive.sql <<'EOF'
+cat > /workspace/databases/EnchantedBeesDB/Tables/Hive.sql <<'EOF'
 CREATE TABLE [dbo].[Hive]
 (
   [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY CONSTRAINT DF_Hive_Id DEFAULT NEWSEQUENTIALID(),
@@ -549,7 +549,7 @@ EOF
 
 print_test "Generate new migration for column addition"
 /workspace/dbctl generate -m "add_last_inspected_column" > /dev/null 2>&1
-if [ -f /workspace/migrations/*_add_last_inspected_column.sql ]; then
+if [ -f /workspace/migrations/EnchantedBeesDB/*_add_last_inspected_column.sql ]; then
     print_pass "New migration generated"
 else
     print_fail "New migration not generated"

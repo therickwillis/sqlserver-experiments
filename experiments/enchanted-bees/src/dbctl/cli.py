@@ -26,7 +26,7 @@ def cli(ctx):
 
 
 @cli.command()
-@click.option('--project', '-p', default='EnchantedBeesDB/EnchantedBeesDB.sqlproj',
+@click.option('--project', '-p', default='databases/EnchantedBeesDB/EnchantedBeesDB.sqlproj',
               help='Path to SQL project file relative to workspace')
 @click.option('--configuration', '-c', default='Debug',
               help='Build configuration (Debug/Release)')
@@ -54,7 +54,7 @@ def info(ctx):
 
 
 @cli.command()
-@click.option('--project', '-p', default='EnchantedBeesDB/EnchantedBeesDB.sqlproj',
+@click.option('--project', '-p', default='databases/EnchantedBeesDB/EnchantedBeesDB.sqlproj',
               help='Path to SQL project file relative to workspace')
 @click.option('--configuration', '-c', default='Debug',
               help='Build configuration (Debug/Release)')
@@ -74,7 +74,7 @@ def init(ctx, project, configuration, server, database, user, password):
 
 
 @cli.command()
-@click.option('--project', '-p', default='EnchantedBeesDB/EnchantedBeesDB.sqlproj',
+@click.option('--project', '-p', default='databases/EnchantedBeesDB/EnchantedBeesDB.sqlproj',
               help='Path to SQL project file relative to workspace')
 @click.option('--configuration', '-c', default='Debug',
               help='Build configuration (Debug/Release)')
