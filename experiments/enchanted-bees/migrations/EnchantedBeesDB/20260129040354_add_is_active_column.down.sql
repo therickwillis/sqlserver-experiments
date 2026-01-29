@@ -1,12 +1,11 @@
 -- =============================================
--- Rollback Migration: 20260128022823_add_last_inspected_column
--- Generated: 2026-01-28T02:28:23.645539
+-- Rollback Migration: 20260129040354_add_is_active_column
+-- Generated: 2026-01-29T04:03:54.272969
 -- =============================================
 -- WARNING: This migration contains changes that cannot be automatically reversed.
 -- You must manually implement the rollback logic below.
 --
 -- Changes in this migration:
---   - ALTER TABLE [DBO]_[HIVE]
 --   - ALTER TABLE [DBO]_[HIVE]
 --   - ALTER TABLE [DBO]_[HIVE]
 --   - ALTER TABLE [DBO]_[HIVE]

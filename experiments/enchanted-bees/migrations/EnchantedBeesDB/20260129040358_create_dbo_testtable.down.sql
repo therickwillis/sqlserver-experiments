@@ -1,6 +1,6 @@
 -- =============================================
--- Rollback Migration: 20260128022816_create_dbo_testtable
--- Generated: 2026-01-28T02:28:16.050399
+-- Rollback Migration: 20260129040358_create_dbo_testtable
+-- Generated: 2026-01-29T04:03:58.584831
 -- WARNING: This rollback script was auto-generated.
 -- Review carefully before executing.
 -- =============================================

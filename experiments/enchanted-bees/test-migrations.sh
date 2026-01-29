@@ -231,7 +231,7 @@ else
     print_fail "Expected 1 migration UP file, found $MIGRATION_COUNT"
 fi
 
-DOWN_MIGRATION_COUNT=$(ls -1 /workspace/migrations/*.down.sql 2>/dev/null | wc -l)
+DOWN_MIGRATION_COUNT=$(ls -1 /workspace/migrations/EnchantedBeesDB/*.down.sql 2>/dev/null | wc -l)
 if [ "$DOWN_MIGRATION_COUNT" -eq 1 ]; then
     print_pass "Migration DOWN file created (count: $DOWN_MIGRATION_COUNT)"
 else
@@ -310,7 +310,7 @@ print_header "Test 6: DOWN Migration Template"
 # ------------------------------------------------------------------------------
 
 print_test "Verify DOWN migration contains template for non-reversible changes"
-DOWN_FILE=$(ls -1 /workspace/migrations/*.down.sql 2>/dev/null | tail -1)
+DOWN_FILE=$(ls -1 /workspace/migrations/EnchantedBeesDB/*.down.sql 2>/dev/null | tail -1)
 if [ -f "$DOWN_FILE" ]; then
     assert_file_contains "$DOWN_FILE" "Rollback Migration:"
 

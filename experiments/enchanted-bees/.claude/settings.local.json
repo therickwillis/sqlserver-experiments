@@ -13,7 +13,9 @@
       "Bash(docker compose:*)",
       "Bash(chmod:*)",
       "Bash(tree:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(./test.sh:*)",
+      "Bash(MSYS_NO_PATHCONV=1 docker compose exec:*)"
     ]
   }
 }

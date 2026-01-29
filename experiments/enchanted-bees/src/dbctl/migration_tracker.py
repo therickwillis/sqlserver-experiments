@@ -28,13 +28,12 @@ END
 def get_connection_string(server: str, database: str, user: str, password: str) -> str:
     """Build SQL Server connection string"""
     return (
-        f"DRIVER={{FreeTDS}};"
+        f"DRIVER={{ODBC Driver 18 for SQL Server}};"
         f"SERVER={server};"
-        f"PORT=1433;"
         f"DATABASE={database};"
         f"UID={user};"
         f"PWD={password};"
-        f"TDS_Version=7.4;"
+        f"TrustServerCertificate=yes;"
     )
 
 
