@@ -4,6 +4,6 @@
 echo "Running migration test suite in dev container..."
 echo
 
-docker compose exec dev /workspace/test-migrations.sh
+MSYS_NO_PATHCONV=1 docker compose exec dev /workspace/test-migrations.sh
 
 exit $?
