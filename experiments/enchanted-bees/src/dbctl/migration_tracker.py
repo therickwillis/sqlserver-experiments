@@ -25,16 +25,38 @@ END
 """
 
 
+def _select_driver() -> str:
+    """Select the best available ODBC driver for SQL Server"""
+    available = set(pyodbc.drivers())
+    for candidate in (
+        "ODBC Driver 18 for SQL Server",
+        "ODBC Driver 17 for SQL Server",
+        "ODBC Driver 13 for SQL Server",
+        "FreeTDS",
+    ):
+        if candidate in available:
+            return candidate
+    raise RuntimeError(
+        "No suitable ODBC driver found. "
+        f"Available drivers: {pyodbc.drivers()}"
+    )
+
+
 def get_connection_string(server: str, database: str, user: str, password: str) -> str:
     """Build SQL Server connection string"""
-    return (
-        f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+    driver = _select_driver()
+    conn = (
+        f"DRIVER={{{driver}}};"
         f"SERVER={server};"
         f"DATABASE={database};"
         f"UID={user};"
         f"PWD={password};"
-        f"TrustServerCertificate=yes;"
     )
+    if driver == "FreeTDS":
+        conn += "PORT=1433;TDS_Version=7.4;Encrypt=no;"
+    else:
+        conn += "TrustServerCertificate=yes;"
+    return conn
 
 
 def ensure_migrations_history_table(conn: pyodbc.Connection) -> None:
