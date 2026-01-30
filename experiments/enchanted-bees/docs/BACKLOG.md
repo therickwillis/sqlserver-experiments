@@ -139,15 +139,17 @@ Develop a turn-key solution for managing MSSQL databases from development to pro
 
 **Priority:** High (Quality gate for deployments)
 
+**Status:** 🔄 Partially Complete (Rollback: ✅ Complete, Testing Framework: 📋 Backlog)
+
 ### User Stories
 
 **Rollback Support** (deferred from Epic 2):
-- [ ] As a developer, I can rollback the last N migrations using `.down.sql` files
-- [ ] As a developer, I can see rollback status in `dbctl status`
-- [ ] As a developer, rollbacks update `__MigrationsHistory` appropriately
-- [ ] As a developer, I can preview a rollback with `--dry-run`
+- [x] As a developer, I can rollback the last N migrations using `.down.sql` files
+- [x] As a developer, I can see rollback status in `dbctl status`
+- [x] As a developer, rollbacks update `__MigrationsHistory` appropriately
+- [x] As a developer, I can preview a rollback with `--dry-run`
 
-**Testing Framework**:
+**Testing Framework** (deferred to future):
 - [ ] As a developer, I can run all tests in an isolated container environment
 - [ ] As a developer, I can define schema validation tests (tables, columns, constraints exist)
 - [ ] As a developer, I can define data integrity tests (constraints are enforced)
@@ -176,6 +178,19 @@ Develop a turn-key solution for managing MSSQL databases from development to pro
   - Rollback tests: Apply then rollback, ensure no data loss
 - Support test fixtures and seed data for testing
 - Named constraints are required (learning from Epic 2)
+
+### Deliverables (Rollback Support - Complete)
+
+- ✅ `dbctl rollback` command with `--force` and `--dry-run` support
+- ✅ `RolledBackAt` and `RolledBackBy` columns in `__MigrationsHistory`
+- ✅ Backwards compatibility with `ensure_rollback_columns()` auto-upgrade
+- ✅ Multi-migration rollback with `--count N` parameter
+- ✅ Template `.down.sql` detection (blocks rollback if TODO marker present)
+- ✅ Missing `.down.sql` file detection and validation
+- ✅ Updated `dbctl status` with rollback information display
+- ✅ Comprehensive test suite: 65/65 tests (100% pass rate)
+- ✅ Complete audit trail (migrations marked as rolled back, not deleted)
+- ✅ Safety features (force flag required, dry-run preview, eligibility validation)
 
 ---
 
@@ -317,17 +332,18 @@ Develop a turn-key solution for managing MSSQL databases from development to pro
 - ✅ All operations run in containers
 - ✅ 47/47 tests passing (100% coverage)
 
-### Phase 2: Quality & Confidence
+### Phase 2: Quality & Confidence 🔄 IN PROGRESS
 **Goal:** Build trust through testing, rollback, and drift detection
 
-- Epic 3: Rollback & Testing Framework
-- Epic 4: Environment Drift Detection
+- ✅ Epic 3: Rollback Support (Complete - 2026-01-30)
+- 📋 Epic 3: Testing Framework (Deferred)
+- 📋 Epic 4: Environment Drift Detection
 
 **Success Criteria:**
-- Rollback support with `.down.sql` execution
-- Comprehensive test suite runs automatically
-- Drift detection identifies environment discrepancies
-- Confidence in deployment quality
+- ✅ Rollback support with `.down.sql` execution
+- 📋 Comprehensive test suite runs automatically (deferred)
+- 📋 Drift detection identifies environment discrepancies
+- ✅ Confidence in deployment quality (rollback safety established)
 
 ### Phase 3: Polish & Scale
 **Goal:** Production-ready solution
@@ -345,21 +361,21 @@ Develop a turn-key solution for managing MSSQL databases from development to pro
 
 ## Current Status
 
-**Active Epic:** Epic 3 - Rollback & Testing Framework
+**Active Epic:** Epic 4 - Environment Drift Detection (or Epic 3 Testing Framework)
 
 **Completed Epics:**
 - ✅ Epic 0: Container Infrastructure (2026-01-27)
 - ✅ Epic 1: Migration Generation System (2026-01-27)
 - ✅ Epic 2: Migration Execution & Tracking (2026-01-28)
+- ✅ Epic 3: Rollback Support (2026-01-30)
 
-**Phase 1 Complete!** Foundation is solid with 47/47 tests passing.
+**Phase 1 & Rollback Complete!** All core migration lifecycle features implemented with 65/65 tests passing.
 
 **Next Steps:**
-1. Begin Epic 3: Rollback & Testing Framework
-   - Implement `dbctl rollback` command to execute `.down.sql` files
-   - Update `__MigrationsHistory` tracking for rollbacks
-   - Create `dbctl test` command for automated testing
-   - Build on existing bash test patterns
+1. Choose next epic to tackle:
+   - **Option A:** Epic 4 - Environment Drift Detection (detect schema differences between environments)
+   - **Option B:** Epic 3 - Testing Framework (formalize test framework with `dbctl test` command)
+   - **Option C:** Epic 5 - Developer Experience improvements (better documentation, error messages)
 
 ---
 
@@ -399,11 +415,27 @@ Develop a turn-key solution for managing MSSQL databases from development to pro
 **Deferred to Epic 3:**
 - Rollback support (`dbctl rollback` command) - DOWN migrations are generated but not executable yet
 
+### 2026-01-30: Epic 3 Completion - Rollback Support
+- ✅ Implemented `dbctl rollback` with `--force` and `--dry-run` flags
+- ✅ Added `RolledBackAt` and `RolledBackBy` columns to `__MigrationsHistory`
+- ✅ Created `ensure_rollback_columns()` for backwards compatibility
+- ✅ Multi-migration rollback with `--count N` parameter
+- ✅ Template `.down.sql` detection (blocks rollback if TODO marker present)
+- ✅ Updated `dbctl status` to show rollback information
+- ✅ 65/65 tests passing (100% coverage including rollback tests)
+
+**Key Technical Decisions:**
+- **Audit trail over deletion**: Rollbacks mark migrations with `RolledBackAt`/`RolledBackBy` instead of deleting rows from history table. Enables rollback analysis and potential re-apply feature.
+- **Safety first**: Require `--force` flag for execution (prevents accidental data loss), provide `--dry-run` for safe preview.
+- **Reuse proven patterns**: Leveraged Epic 2's sqlcmd execution pattern, lock mechanism, and SQL cleaning logic for consistency.
+- **Reverse chronological order**: Always rollback most recent migrations first to prevent dependency violations.
+- **Template detection**: Identify `.down.sql` files with TODO markers that require manual implementation before rollback.
+
 ### Questions to Resolve
 - [x] ~~Specific CLI naming convention~~ → Resolved: `dbctl` (database control)
 - [x] ~~VS Code integration approach~~ → Resolved: devcontainer + tasks (both)
 - [ ] Test framework choice (pytest, custom, SQL-based) - leaning toward bash scripts + pytest hybrid
 - [x] ~~Migration file format~~ → Resolved: pure SQL with metadata headers in comments
 - [x] ~~Rollback strategy~~ → Resolved: down migrations (`.down.sql` files)
-- [ ] Rollback history tracking (mark as rolled back vs delete row from `__MigrationsHistory`)
-- [ ] Should rollback require explicit confirmation (`--force` flag)?
+- [x] ~~Rollback history tracking~~ → Resolved: mark as rolled back with `RolledBackAt`/`RolledBackBy` columns (maintains audit trail)
+- [x] ~~Rollback confirmation~~ → Resolved: `--force` flag required for execution, `--dry-run` for preview

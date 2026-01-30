@@ -88,8 +88,9 @@ def status(ctx):
 
     # Try to show migration status
     try:
-        from ..migration_tracker import get_connection_string, get_applied_migrations
+        from ..migration_tracker import get_connection_string, get_applied_migrations, ensure_migrations_history_table, ensure_rollback_columns
         from ..migration_executor import discover_migrations, get_pending_migrations
+        from ..rollback_executor import get_rollbackable_migrations
 
         workspace_root = ctx.obj.get('WORKSPACE_ROOT', Path('/workspace'))
         migrations_dir = workspace_root / 'migrations' / db_name
@@ -99,6 +100,10 @@ def status(ctx):
         conn = pyodbc.connect(conn_string, autocommit=True)
 
         try:
+            # Ensure migrations table and rollback columns exist
+            ensure_migrations_history_table(conn)
+            ensure_rollback_columns(conn)
+
             # Get migration counts
             all_migrations = discover_migrations(migrations_dir)
             applied_migrations = get_applied_migrations(conn)
@@ -120,6 +125,26 @@ def status(ctx):
                 click.secho("  Run 'dbctl migrate' to apply pending migrations", fg="cyan")
             else:
                 click.secho("  ✓ Database is up to date!", fg="green")
+
+            # Show rollback status
+            click.echo()
+            rollbackable = get_rollbackable_migrations(migrations_dir, conn, count=5)
+
+            if len(rollbackable) > 0:
+                click.secho("Rollback:", fg="yellow")
+                click.echo(f"  Last {len(rollbackable)} migration(s) can be rolled back:")
+                click.echo()
+
+                for mig in rollbackable:
+                    if mig['can_rollback']:
+                        click.secho(f"    ✓ {mig['migration_id']}", fg="green")
+                    elif not mig['has_down_file']:
+                        click.secho(f"    ✗ {mig['migration_id']} (no .down.sql)", fg="red")
+                    elif mig['down_file_is_template']:
+                        click.secho(f"    ⚠ {mig['migration_id']} (manual rollback required)", fg="yellow")
+
+                click.echo()
+                click.secho("  Run 'dbctl rollback --dry-run' to preview rollback", fg="cyan")
 
         finally:
             conn.close()

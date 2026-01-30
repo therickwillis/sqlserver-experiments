@@ -19,7 +19,9 @@ BEGIN
         [AppliedAt] DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
         [AppliedBy] NVARCHAR(100) NOT NULL,
         [ExecutionTimeMs] INT NOT NULL,
-        [Success] BIT NOT NULL DEFAULT 1
+        [Success] BIT NOT NULL DEFAULT 1,
+        [RolledBackAt] DATETIME2 NULL,
+        [RolledBackBy] NVARCHAR(100) NULL
     );
 END
 """
@@ -95,7 +97,7 @@ def get_applied_migrations(conn: pyodbc.Connection) -> List[Dict]:
                 ExecutionTimeMs,
                 Success
             FROM [dbo].[__MigrationsHistory]
-            WHERE Success = 1
+            WHERE Success = 1 AND RolledBackAt IS NULL
             ORDER BY MigrationId
         """)
 
@@ -300,5 +302,166 @@ def release_migration_lock(conn: pyodbc.Connection) -> None:
                 @Resource = 'DbctlMigrationLock',
                 @LockOwner = 'Session';
         """)
+    finally:
+        cursor.close()
+
+
+def ensure_rollback_columns(conn: pyodbc.Connection) -> None:
+    """
+    Add RolledBackAt and RolledBackBy columns to __MigrationsHistory if they don't exist
+
+    This provides backwards compatibility for existing installations that were created
+    before rollback support was added.
+
+    Args:
+        conn: Active database connection
+    """
+    cursor = conn.cursor()
+    try:
+        # Check if RolledBackAt column exists
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM sys.columns
+            WHERE object_id = OBJECT_ID('[dbo].[__MigrationsHistory]')
+            AND name = 'RolledBackAt'
+        """)
+
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("""
+                ALTER TABLE [dbo].[__MigrationsHistory]
+                ADD [RolledBackAt] DATETIME2 NULL
+            """)
+
+        # Check if RolledBackBy column exists
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM sys.columns
+            WHERE object_id = OBJECT_ID('[dbo].[__MigrationsHistory]')
+            AND name = 'RolledBackBy'
+        """)
+
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("""
+                ALTER TABLE [dbo].[__MigrationsHistory]
+                ADD [RolledBackBy] NVARCHAR(100) NULL
+            """)
+
+        conn.commit()
+
+    finally:
+        cursor.close()
+
+
+def get_applied_migrations_for_rollback(conn: pyodbc.Connection) -> List[Dict]:
+    """
+    Get list of applied migrations in reverse chronological order for rollback
+
+    Only includes migrations that haven't been rolled back yet.
+
+    Args:
+        conn: Active database connection
+
+    Returns:
+        List of dicts with migration info, ordered most recent first
+    """
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT
+                MigrationId,
+                Checksum,
+                AppliedAt,
+                AppliedBy,
+                ExecutionTimeMs,
+                Success
+            FROM [dbo].[__MigrationsHistory]
+            WHERE Success = 1 AND RolledBackAt IS NULL
+            ORDER BY MigrationId DESC
+        """)
+
+        migrations = []
+        for row in cursor.fetchall():
+            migrations.append({
+                'migration_id': row.MigrationId,
+                'checksum': row.Checksum,
+                'applied_at': row.AppliedAt,
+                'applied_by': row.AppliedBy,
+                'execution_time_ms': row.ExecutionTimeMs,
+                'success': bool(row.Success)
+            })
+
+        return migrations
+
+    finally:
+        cursor.close()
+
+
+def record_rollback(
+    conn: pyodbc.Connection,
+    migration_id: str,
+    execution_time_ms: int,
+    rolled_back_by: str = 'dbctl'
+) -> None:
+    """
+    Mark a migration as rolled back in __MigrationsHistory
+
+    Args:
+        conn: Active database connection
+        migration_id: Migration identifier (e.g., "20260127043356_add_hive_table")
+        execution_time_ms: Execution time of the rollback in milliseconds
+        rolled_back_by: Tool/user that rolled back the migration
+    """
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE [dbo].[__MigrationsHistory]
+            SET RolledBackAt = GETUTCDATE(),
+                RolledBackBy = ?
+            WHERE MigrationId = ?
+        """, (rolled_back_by, migration_id))
+
+        conn.commit()
+
+    finally:
+        cursor.close()
+
+
+def validate_rollback_eligible(
+    conn: pyodbc.Connection,
+    migration_id: str
+) -> tuple:
+    """
+    Check if a migration can be rolled back
+
+    Args:
+        conn: Active database connection
+        migration_id: Migration identifier to check
+
+    Returns:
+        Tuple of (is_eligible, error_message)
+        is_eligible is True if migration can be rolled back, False otherwise
+        error_message is None if eligible, otherwise contains reason
+    """
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT Success, RolledBackAt
+            FROM [dbo].[__MigrationsHistory]
+            WHERE MigrationId = ?
+        """, (migration_id,))
+
+        row = cursor.fetchone()
+
+        if row is None:
+            return (False, f"Migration '{migration_id}' was never applied")
+
+        if not row.Success:
+            return (False, f"Migration '{migration_id}' was not successfully applied")
+
+        if row.RolledBackAt is not None:
+            return (False, f"Migration '{migration_id}' was already rolled back at {row.RolledBackAt}")
+
+        return (True, None)
+
     finally:
         cursor.close()

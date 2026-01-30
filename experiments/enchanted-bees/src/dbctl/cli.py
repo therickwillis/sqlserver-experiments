@@ -107,6 +107,28 @@ def migrate(ctx, server, database, user, password, dry_run):
     migrate_command.migrate(ctx, server, database, user, password, dry_run)
 
 
+@cli.command()
+@click.option('--count', '-n', type=int, default=1,
+              help='Number of migrations to rollback (default: 1)')
+@click.option('--server', '-s', default=lambda: os.getenv('DB_SERVER', 'sqlserver'),
+              help='SQL Server hostname (default: $DB_SERVER or sqlserver)')
+@click.option('--database', '-d', default=lambda: os.getenv('DB_NAME', 'EnchantedBeesDB'),
+              help='Database name (default: $DB_NAME or EnchantedBeesDB)')
+@click.option('--user', '-u', default=lambda: os.getenv('DB_USER', 'sa'),
+              help='SQL Server username (default: $DB_USER or sa)')
+@click.option('--password', default=lambda: os.getenv('DB_PASSWORD', ''),
+              help='SQL Server password (default: $DB_PASSWORD)')
+@click.option('--dry-run', is_flag=True,
+              help='Preview rollback without executing')
+@click.option('--force', is_flag=True,
+              help='Execute rollback without confirmation (required unless --dry-run)')
+@click.pass_context
+def rollback(ctx, count, server, database, user, password, dry_run, force):
+    """Rollback the last N migrations using .down.sql files"""
+    from .commands import rollback_command
+    rollback_command.rollback(ctx, count, server, database, user, password, dry_run, force)
+
+
 def main():
     """Entry point for the CLI"""
     cli(obj={})

@@ -1,0 +1,390 @@
+[0;36m============================================================[0m
+[0;36m  Migration Generation System - Test Suite[0m
+[0;36m============================================================[0m
+
+[0;36m============================================================[0m
+[0;36m  Setup: Clean Environment[0m
+[0;36m============================================================[0m
+
+[1;33mINFO:[0m Cleaning up test artifacts...
+[1;33mINFO:[0m Resetting database...
+[1;33mINFO:[0m Cleanup complete
+
+[0;36m============================================================[0m
+[0;36m  Test 1: Directory Structure[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Verify migrations directory exists
+[0;32m✓ PASS:[0m Directory exists: /workspace/migrations
+[0;34mTEST:[0m Verify migrations README exists
+[0;32m✓ PASS:[0m File exists: /workspace/migrations/README.md
+[0;34mTEST:[0m Verify .dbctl directory structure can be created
+[0;32m✓ PASS:[0m Directory exists: /workspace/.dbctl/baselines
+
+[0;36m============================================================[0m
+[0;36m  Test 2: Database Initialization (Before Migrations)[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Verify dbctl init command is available
+[0;32m✓ PASS:[0m dbctl init command available
+[0;34mTEST:[0m Initialize database (baseline state)
+[1;33mINFO:[0m Running dbctl init to publish baseline database...
+[0;32m✓ PASS:[0m Database initialized and published successfully
+[0;34mTEST:[0m Verify database exists after init
+[0;32m✓ PASS:[0m Database verified to exist on server
+[0;34mTEST:[0m Initialize baseline tracking
+============================================================
+  Migration Generation
+============================================================
+
+Step 1: Building SQL project...
+✓ Build successful: databases/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac
+
+Step 2: Checking baseline...
+  No baseline found. Creating initial baseline...
+✓ Initial baseline created: EnchantedBeesDB_119ab20816f9.dacpac
+
+Migration generation complete. Use --init flag to create future migrations.
+[0;34mTEST:[0m Verify baseline DACPAC created
+[0;32m✓ PASS:[0m Baseline DACPAC created (count: 1)
+[0;34mTEST:[0m Verify baseline filename format (includes hash)
+[0;32m✓ PASS:[0m Baseline filename format correct: EnchantedBeesDB_119ab20816f9.dacpac
+
+[0;36m============================================================[0m
+[0;36m  Test 3: No Changes Detected[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Generate migration when no changes exist
+[0;32m✓ PASS:[0m Correctly detected no schema changes
+[0;34mTEST:[0m Verify no migration files created
+[0;32m✓ PASS:[0m No migration files created (count: 0)
+
+[0;36m============================================================[0m
+[0;36m  Test 4: Create Table Migration (Auto Description)[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Add new Hive table to SQL project
+[0;32m✓ PASS:[0m File exists: /workspace/databases/EnchantedBeesDB/Tables/Hive.sql
+[0;34mTEST:[0m Generate migration with auto-description
+============================================================
+  Migration Generation
+============================================================
+
+Step 1: Building SQL project...
+✓ Build successful: databases/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac
+
+Step 2: Checking baseline...
+  Baseline: EnchantedBeesDB_119ab20816f9.dacpac
+
+Step 3: Comparing schemas...
+✓ Schema changes detected!
+
+Step 4: Analyzing changes...
+  Found 4 schema change(s):
+    - CREATE TABLE [DBO]_[HIVE]
+    - ALTER TABLE [DBO]_[HIVE]
+    - ALTER TABLE [DBO]_[HIVE]
+    - ALTER TABLE [DBO]_[HIVE]
+
+Step 5: Generating migration files...
+  Migration: 20260130032707_create_dbo_hive_alter_3_objects
+
+✓ Migration files created:
+  UP:   migrations/EnchantedBeesDB/20260130032707_create_dbo_hive_alter_3_objects.sql
+  DOWN: migrations/EnchantedBeesDB/20260130032707_create_dbo_hive_alter_3_objects.down.sql
+
+Step 6: Updating baseline...
+✓ Baseline updated: EnchantedBeesDB_9c98204e9175.dacpac
+
+============================================================
+  Migration Generation Complete!
+============================================================
+
+Next steps:
+  1. Review migration: migrations/EnchantedBeesDB/20260130032707_create_dbo_hive_alter_3_objects.sql
+  2. Apply migration:  dbctl migrate (coming soon)
+
+[0;34mTEST:[0m Verify migration files created
+[0;32m✓ PASS:[0m Migration UP file created (count: 1)
+[0;32m✓ PASS:[0m Migration DOWN file created (count: 1)
+[0;34mTEST:[0m Verify migration filename format (timestamp_description.sql)
+[0;32m✓ PASS:[0m Migration filename format correct: 20260130032707_create_dbo_hive_alter_3_objects.sql
+[0;34mTEST:[0m Verify migration contains metadata header
+[0;32m✓ PASS:[0m File contains '-- Migration:': /workspace/migrations/EnchantedBeesDB/20260130032707_create_dbo_hive_alter_3_objects.sql
+[0;32m✓ PASS:[0m File contains '-- Generated:': /workspace/migrations/EnchantedBeesDB/20260130032707_create_dbo_hive_alter_3_objects.sql
+[0;32m✓ PASS:[0m File contains '-- Baseline DACPAC:': /workspace/migrations/EnchantedBeesDB/20260130032707_create_dbo_hive_alter_3_objects.sql
+[0;32m✓ PASS:[0m File contains '-- Checksum:': /workspace/migrations/EnchantedBeesDB/20260130032707_create_dbo_hive_alter_3_objects.sql
+[0;34mTEST:[0m Verify migration contains CREATE TABLE statement
+[0;32m✓ PASS:[0m File contains 'CREATE TABLE [dbo].[Hive]': /workspace/migrations/EnchantedBeesDB/20260130032707_create_dbo_hive_alter_3_objects.sql
+[0;34mTEST:[0m Verify new baseline created after migration
+[0;32m✓ PASS:[0m New baseline created (total count: 2)
+
+[0;36m============================================================[0m
+[0;36m  Test 5: Alter Table Migration (Custom Description)[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Add IsActive column to Hive table
+[0;34mTEST:[0m Generate migration with custom description
+============================================================
+  Migration Generation
+============================================================
+
+Step 1: Building SQL project...
+✓ Build successful: databases/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac
+
+Step 2: Checking baseline...
+  Baseline: EnchantedBeesDB_9c98204e9175.dacpac
+
+Step 3: Comparing schemas...
+✓ Schema changes detected!
+
+Step 4: Analyzing changes...
+  Found 3 schema change(s):
+    - ALTER TABLE [DBO]_[HIVE]
+    - ALTER TABLE [DBO]_[HIVE]
+    - ALTER TABLE [DBO]_[HIVE]
+
+Step 5: Generating migration files...
+  Migration: 20260130032712_add_is_active_column
+
+✓ Migration files created:
+  UP:   migrations/EnchantedBeesDB/20260130032712_add_is_active_column.sql
+  DOWN: migrations/EnchantedBeesDB/20260130032712_add_is_active_column.down.sql
+
+Step 6: Updating baseline...
+✓ Baseline updated: EnchantedBeesDB_b4ad9abc66a4.dacpac
+
+============================================================
+  Migration Generation Complete!
+============================================================
+
+Next steps:
+  1. Review migration: migrations/EnchantedBeesDB/20260130032712_add_is_active_column.sql
+  2. Apply migration:  dbctl migrate (coming soon)
+
+[0;34mTEST:[0m Verify custom description used in filename
+[0;32m✓ PASS:[0m Migration with custom description created: 20260130032712_add_is_active_column.sql
+[0;34mTEST:[0m Verify migration contains ALTER TABLE or column addition
+[0;32m✓ PASS:[0m Migration contains column changes
+
+[0;36m============================================================[0m
+[0;36m  Test 6: DOWN Migration Template[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Verify DOWN migration contains template for non-reversible changes
+[0;32m✓ PASS:[0m File contains 'Rollback Migration:': /workspace/migrations/EnchantedBeesDB/20260130032712_add_is_active_column.down.sql
+[0;32m✓ PASS:[0m DOWN migration is a template (requires manual implementation)
+
+[0;36m============================================================[0m
+[0;36m  Test 7: Multiple Table Creation[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Add another test table
+[0;34mTEST:[0m Generate migration for multiple changes
+============================================================
+  Migration Generation
+============================================================
+
+Step 1: Building SQL project...
+✓ Build successful: databases/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac
+
+Step 2: Checking baseline...
+  Baseline: EnchantedBeesDB_b4ad9abc66a4.dacpac
+
+Step 3: Comparing schemas...
+✓ Schema changes detected!
+
+Step 4: Analyzing changes...
+  Found 1 schema change(s):
+    - CREATE TABLE [DBO]_[TESTTABLE]
+
+Step 5: Generating migration files...
+  Migration: 20260130032716_create_dbo_testtable
+
+✓ Migration files created:
+  UP:   migrations/EnchantedBeesDB/20260130032716_create_dbo_testtable.sql
+  DOWN: migrations/EnchantedBeesDB/20260130032716_create_dbo_testtable.down.sql
+
+Step 6: Updating baseline...
+✓ Baseline updated: EnchantedBeesDB_3eeb2fadba55.dacpac
+
+============================================================
+  Migration Generation Complete!
+============================================================
+
+Next steps:
+  1. Review migration: migrations/EnchantedBeesDB/20260130032716_create_dbo_testtable.sql
+  2. Apply migration:  dbctl migrate (coming soon)
+
+[0;34mTEST:[0m Verify migration auto-description reflects multiple changes
+[0;32m✓ PASS:[0m Migration description reflects changes: 20260130032716_create_dbo_testtable
+
+[0;36m============================================================[0m
+[0;36m  Test 8: dbctl Command Integration[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Verify dbctl generate command is available
+[0;32m✓ PASS:[0m dbctl generate command available
+[0;34mTEST:[0m Verify dbctl generate --help works
+[0;32m✓ PASS:[0m dbctl generate --help displays correctly
+
+[0;36m============================================================[0m
+[0;36m  Test 9: Build Integration[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Verify dbctl build command still works
+Building SQL project: databases/EnchantedBeesDB/EnchantedBeesDB.sqlproj
+  Configuration: Debug
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  EnchantedBeesDB -> /workspace/databases/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:00.96
+
+✓ Build successful!
+  DACPAC: databases/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac
+[0;32m✓ PASS:[0m DACPAC built successfully
+
+[0;36m============================================================[0m
+[0;36m  Test 10: Build Command Integration[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Verify dbctl build command works with test tables
+Building SQL project: databases/EnchantedBeesDB/EnchantedBeesDB.sqlproj
+  Configuration: Debug
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  EnchantedBeesDB -> /workspace/databases/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:00.95
+
+✓ Build successful!
+  DACPAC: databases/EnchantedBeesDB/bin/Debug/EnchantedBeesDB.dacpac
+[0;32m✓ PASS:[0m DACPAC rebuilt with test tables
+
+[0;36m============================================================[0m
+[0;36m  Test 11: Migration Execution - Dry Run[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Verify dbctl migrate command is available
+[0;32m✓ PASS:[0m dbctl migrate command available
+[0;34mTEST:[0m Test dry-run with pending migrations
+[0;32m✓ PASS:[0m Dry-run shows pending migrations
+[0;34mTEST:[0m Verify dry-run does not apply migrations
+[0;32m✓ PASS:[0m Dry-run mode confirmed
+
+[0;36m============================================================[0m
+[0;36m  Test 12: Migration Execution - Apply Migrations[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Apply pending migrations
+[1;33mINFO:[0m Running dbctl migrate to apply pending migrations...
+[0;32m✓ PASS:[0m Migrations applied successfully
+[0;34mTEST:[0m Verify migrations recorded in __MigrationsHistory
+[0;32m✓ PASS:[0m Found 3 applied migration(s) in __MigrationsHistory
+[0;34mTEST:[0m Verify Hive table created in database
+[0;32m✓ PASS:[0m Hive table created (migration succeeded)
+[0;34mTEST:[0m Verify TestTable created in database
+[0;32m✓ PASS:[0m TestTable created (migration succeeded)
+
+[0;36m============================================================[0m
+[0;36m  Test 13: Migration Status After Execution[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Check migration status shows no pending migrations
+[0;32m✓ PASS:[0m Status correctly shows database is up to date
+[0;34mTEST:[0m Verify status shows applied migration count
+[0;32m✓ PASS:[0m Status shows 3 applied migration(s)
+[0;34mTEST:[0m Verify status shows zero pending migrations
+[0;32m✓ PASS:[0m Status shows 0 pending migrations
+
+[0;36m============================================================[0m
+[0;36m  Test 14: Re-running Migrate (Idempotency)[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Run migrate again when no pending migrations
+[0;32m✓ PASS:[0m Correctly detects no pending migrations
+[0;34mTEST:[0m Verify no duplicate migrations applied
+[0;32m✓ PASS:[0m Migration count unchanged (3)
+
+[0;36m============================================================[0m
+[0;36m  Test 15: New Migration After Initial Apply[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Add a new column to existing table
+[0;34mTEST:[0m Generate new migration for column addition
+[0;32m✓ PASS:[0m New migration generated
+[0;34mTEST:[0m Verify status shows 1 pending migration
+[0;32m✓ PASS:[0m Status correctly shows 1 pending migration
+[0;34mTEST:[0m Apply new migration
+[0;32m✓ PASS:[0m New migration applied successfully
+[0;34mTEST:[0m Verify LastInspectedAt column exists in database
+[0;32m✓ PASS:[0m LastInspectedAt column added (migration succeeded)
+
+[0;36m============================================================[0m
+[0;36m  Test 16: Migration Checksum Validation[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Verify migrations have checksums recorded
+[0;32m✓ PASS:[0m Migrations recorded with checksums and execution times
+[0;34mTEST:[0m Verify execution times recorded
+[0;32m✓ PASS:[0m All 4 applied migrations tracked with execution times
+
+[1;33mINFO:[0m Converting template .down.sql files to executable scripts for testing...
+[0;32m✓ PASS:[0m Prepared 4 .down.sql files
+
+[0;36m============================================================[0m
+[0;36m  Test 17: Rollback Status Display[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Verify status shows rollback information
+[0;32m✓ PASS:[0m Status shows rollback section
+[0;34mTEST:[0m Verify status shows rollbackable migrations
+[0;32m✓ PASS:[0m Status shows rollbackable migrations count
+
+[0;36m============================================================[0m
+[0;36m  Test 18: Rollback Dry-Run[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Run rollback with --dry-run flag
+[0;32m✓ PASS:[0m Dry-run mode activated correctly
+[0;34mTEST:[0m Verify dry-run shows what would be rolled back
+[0;32m✓ PASS:[0m Dry-run shows migration(s) to rollback
+[0;34mTEST:[0m Verify dry-run did not execute rollback
+[0;32m✓ PASS:[0m Dry-run did not modify database (still 4 applied)
+
+[0;36m============================================================[0m
+[0;36m  Test 19: Rollback Without Force Flag[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Attempt rollback without --force flag (should fail)
+[0;32m✓ PASS:[0m Correctly requires --force flag (exit code: 1)
+[0;34mTEST:[0m Verify rollback was not executed without --force
+[0;32m✓ PASS:[0m Rollback not executed without --force (still 4 applied)
+
+[0;36m============================================================[0m
+[0;36m  Test 20: Basic Rollback Execution[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Execute rollback with --force flag
+[0;32m✓ PASS:[0m Rollback executed successfully
+[0;34mTEST:[0m Verify rollback shows execution time
+[0;32m✓ PASS:[0m Rollback execution time displayed
+[0;34mTEST:[0m Verify applied migration count decreased
+[0;32m✓ PASS:[0m Applied count decreased from 4 to 3
+
+[0;36m============================================================[0m
+[0;36m  Test 21: Multiple Migration Rollback[0m
+[0;36m============================================================[0m
+
+[0;34mTEST:[0m Rollback last 2 migrations with --count 2
