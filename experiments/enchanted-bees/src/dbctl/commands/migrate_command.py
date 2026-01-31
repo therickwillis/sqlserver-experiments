@@ -18,7 +18,7 @@ from ..migration_executor import (
 )
 
 
-def migrate(ctx, server: str, database: str, user: str, password: str, dry_run: bool):
+def migrate(ctx, server: str, database: str, user: str, password: str, dry_run: bool, validate_drift: bool = False, force: bool = False):
     """
     Apply pending migrations to the database
 
@@ -27,10 +27,13 @@ def migrate(ctx, server: str, database: str, user: str, password: str, dry_run: 
     2. Ensures __MigrationsHistory table exists
     3. Discovers all migration files
     4. Validates migration integrity (no tampering)
-    5. Executes pending migrations in order
-    6. Records successful migrations
+    5. (Optional) Validates no drift exists before migration
+    6. Executes pending migrations in order
+    7. Records successful migrations
 
     With --dry-run, shows pending migrations without applying them.
+    With --validate-drift, checks for schema drift before applying migrations.
+    With --force, applies migrations even if drift is detected (requires --validate-drift).
     """
     workspace_root = ctx.obj['WORKSPACE_ROOT']
     migrations_dir = workspace_root / 'migrations' / database
@@ -97,6 +100,126 @@ def migrate(ctx, server: str, database: str, user: str, password: str, dry_run: 
 
         click.secho("✓ All migrations validated", fg="green")
         click.echo()
+
+        # Step 4.5: Validate drift (optional)
+        if validate_drift:
+            click.secho("Step 4.5: Checking for schema drift...", fg="cyan", bold=True)
+
+            from ..drift_detector import (
+                extract_database_dacpac,
+                compare_database_to_project,
+                categorize_drift,
+                ToleranceLevel
+            )
+            import tempfile
+            import subprocess
+
+            # Build project DACPAC
+            project_path = workspace_root / 'databases' / database / f'{database}.sqlproj'
+
+            if not project_path.exists():
+                click.secho(f"⚠ Project file not found: {project_path}", fg="yellow")
+                click.echo("  Skipping drift validation.")
+                click.echo()
+            else:
+                try:
+                    # Build DACPAC
+                    result = subprocess.run(
+                        ['dotnet', 'build', str(project_path), '-c', 'Debug', '--nologo'],
+                        capture_output=True,
+                        text=True,
+                        check=False
+                    )
+
+                    if result.returncode != 0:
+                        click.secho("⚠ Project build failed. Skipping drift validation.", fg="yellow")
+                        click.echo()
+                    else:
+                        project_dir = project_path.parent
+                        dacpac_name = project_path.stem + '.dacpac'
+                        project_dacpac = project_dir / 'bin' / 'Debug' / dacpac_name
+
+                        # Extract database DACPAC
+                        with tempfile.NamedTemporaryFile(suffix='.dacpac', delete=False) as temp_file:
+                            database_dacpac = Path(temp_file.name)
+
+                        try:
+                            success, error = extract_database_dacpac(
+                                server=server,
+                                database=database,
+                                user=user,
+                                password=password,
+                                output_path=database_dacpac
+                            )
+
+                            if not success:
+                                click.secho(f"⚠ Could not extract database schema: {error}", fg="yellow")
+                                click.echo("  Skipping drift validation.")
+                                click.echo()
+                            else:
+                                # Compare DACPACs
+                                drift_data = compare_database_to_project(
+                                    project_dacpac=project_dacpac,
+                                    database_dacpac=database_dacpac
+                                )
+
+                                if 'error' in drift_data:
+                                    click.secho(f"⚠ Drift comparison failed: {drift_data['error']}", fg="yellow")
+                                    click.echo("  Skipping drift validation.")
+                                    click.echo()
+                                elif not drift_data.get('has_drift', False):
+                                    click.secho("✓ No drift detected", fg="green")
+                                    click.echo()
+                                else:
+                                    # Categorize drift
+                                    changes = drift_data.get('changes', [])
+                                    categorized = categorize_drift(changes, ToleranceLevel.NORMAL)
+
+                                    unacceptable = [c for c in categorized if not c['acceptable']]
+                                    acceptable = [c for c in categorized if c['acceptable']]
+
+                                    if len(unacceptable) > 0:
+                                        click.secho("✗ Schema drift detected!", fg="red", err=True)
+                                        click.echo()
+                                        click.echo(f"  Found {len(unacceptable)} unacceptable drift(s):")
+
+                                        for drift in unacceptable[:5]:
+                                            obj_type = drift.get('object_type', 'OBJECT')
+                                            obj_name = drift.get('object_name', 'unknown')
+                                            drift_type = drift.get('type', 'CHANGE')
+                                            click.echo(f"    • {drift_type} {obj_type} [{obj_name}]")
+
+                                        if len(unacceptable) > 5:
+                                            click.echo(f"    ... and {len(unacceptable) - 5} more")
+
+                                        click.echo()
+                                        click.secho("  Run 'dbctl drift' to see full report", fg="cyan")
+                                        click.secho("  Run 'dbctl drift --fix' to generate repair migration", fg="cyan")
+                                        click.echo()
+
+                                        if not force:
+                                            click.secho("  Use --force to migrate anyway (not recommended)", fg="yellow")
+                                            click.echo()
+                                            click.secho("Migration aborted due to drift.", fg="red", bold=True)
+                                            raise click.Abort()
+                                        else:
+                                            click.secho("  WARNING: Proceeding with migration despite drift (--force)", fg="yellow", bold=True)
+                                            click.echo()
+                                    else:
+                                        if len(acceptable) > 0:
+                                            click.secho(f"✓ Only acceptable drift detected ({len(acceptable)} change(s))", fg="green")
+                                        else:
+                                            click.secho("✓ No drift detected", fg="green")
+                                        click.echo()
+                        finally:
+                            # Clean up temp DACPAC
+                            if database_dacpac.exists():
+                                database_dacpac.unlink()
+
+                except Exception as e:
+                    click.secho(f"⚠ Drift validation error: {e}", fg="yellow")
+                    click.echo("  Continuing with migration...")
+                    click.echo()
 
         # Step 5: Show pending migrations
         click.secho("Step 5: Pending migrations:", fg="cyan", bold=True)

@@ -16,7 +16,11 @@
       "Bash(ls:*)",
       "Bash(./test.sh:*)",
       "Bash(MSYS_NO_PATHCONV=1 docker compose exec:*)",
-      "Bash(odbcinst:*)"
+      "Bash(odbcinst:*)",
+      "Bash(wc:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(sqlpackage:*)",
+      "Bash(git add:*)"
     ]
   }
 }

@@ -100,11 +100,15 @@ def generate(ctx, project, configuration, message, init):
               help='SQL Server password (default: $DB_PASSWORD)')
 @click.option('--dry-run', is_flag=True,
               help='Show pending migrations without applying them')
+@click.option('--validate-drift', is_flag=True,
+              help='Check for schema drift before applying migrations')
+@click.option('--force', is_flag=True,
+              help='Apply migrations even if drift is detected (use with --validate-drift)')
 @click.pass_context
-def migrate(ctx, server, database, user, password, dry_run):
+def migrate(ctx, server, database, user, password, dry_run, validate_drift, force):
     """Apply pending migrations to database"""
     from .commands import migrate_command
-    migrate_command.migrate(ctx, server, database, user, password, dry_run)
+    migrate_command.migrate(ctx, server, database, user, password, dry_run, validate_drift, force)
 
 
 @cli.command()
@@ -127,6 +131,43 @@ def rollback(ctx, count, server, database, user, password, dry_run, force):
     """Rollback the last N migrations using .down.sql files"""
     from .commands import rollback_command
     rollback_command.rollback(ctx, count, server, database, user, password, dry_run, force)
+
+
+@cli.command()
+@click.option('--server', '-s', default=lambda: os.getenv('DB_SERVER', 'sqlserver'),
+              help='SQL Server hostname (default: $DB_SERVER or sqlserver)')
+@click.option('--database', '-d', default=lambda: os.getenv('DB_NAME', 'EnchantedBeesDB'),
+              help='Database name (default: $DB_NAME or EnchantedBeesDB)')
+@click.option('--user', '-u', default=lambda: os.getenv('DB_USER', 'sa'),
+              help='SQL Server username (default: $DB_USER or sa)')
+@click.option('--password', default=lambda: os.getenv('DB_PASSWORD', ''),
+              help='SQL Server password (default: $DB_PASSWORD)')
+@click.option('--project', '-p', default='databases/EnchantedBeesDB/EnchantedBeesDB.sqlproj',
+              help='Path to SQL project file relative to workspace')
+@click.option('--configuration', '-c', default='Debug',
+              help='Build configuration (Debug/Release)')
+@click.option('--baseline', default=None,
+              help='Compare against specific baseline DACPAC instead of project')
+@click.option('--output', '-o', default='table', type=click.Choice(['table', 'json', 'xml']),
+              help='Output format (default: table)')
+@click.option('--report-file', default=None,
+              help='Save detailed report to file')
+@click.option('--dry-run', is_flag=True,
+              help='Show what would be checked without connecting to database')
+@click.option('--fix', is_flag=True,
+              help='Generate repair migration script to fix detected drift')
+@click.option('--tolerance', default='normal', type=click.Choice(['strict', 'normal', 'permissive']),
+              help='Drift tolerance level (default: normal)')
+@click.option('--exit-code', is_flag=True,
+              help='Return non-zero exit code if drift detected (for CI/CD)')
+@click.pass_context
+def drift(ctx, server, database, user, password, project, configuration,
+          baseline, output, report_file, dry_run, fix, tolerance, exit_code):
+    """Detect schema drift between database and SQL project"""
+    from .commands import drift_command
+    drift_command.drift(ctx, server, database, user, password, project,
+                       configuration, baseline, output, report_file,
+                       dry_run, fix, tolerance, exit_code)
 
 
 def main():

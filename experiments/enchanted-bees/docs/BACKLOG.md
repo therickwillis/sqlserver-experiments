@@ -200,14 +200,16 @@ Develop a turn-key solution for managing MSSQL databases from development to pro
 
 **Priority:** Medium (Key pain point to solve)
 
+**Status:** ✅ Complete (2026-01-31)
+
 ### User Stories
 
-- [ ] As a developer, I can compare two database environments using `dbctl drift`
-- [ ] As a developer, I can detect drift between my local DB and the migration scripts
-- [ ] As a developer, I can see a report of schema differences between environments
-- [ ] As a system, I can block deployments if target environment has unexpected drift
-- [ ] As a developer, I can generate a "repair" migration to fix drift
-- [ ] As a CI pipeline, I can run drift detection as part of deployment validation
+- [x] As a developer, I can compare two database environments using `dbctl drift`
+- [x] As a developer, I can detect drift between my local DB and the migration scripts
+- [x] As a developer, I can see a report of schema differences between environments
+- [x] As a system, I can block deployments if target environment has unexpected drift
+- [x] As a developer, I can generate a "repair" migration to fix drift
+- [x] As a CI pipeline, I can run drift detection as part of deployment validation
 
 ### Technical Notes
 
@@ -223,7 +225,48 @@ Develop a turn-key solution for managing MSSQL databases from development to pro
   2. Current state (extract DACPAC from live database)
 - Configurable drift tolerance (some drift may be acceptable in certain scenarios)
 - Generate repair scripts automatically when possible
-- Consider: integration with `dbctl migrate --validate` to check drift before applying
+- Integration with `dbctl migrate --validate-drift` to check drift before applying
+
+### Deliverables
+
+- ✅ `drift_detector.py` - Core drift detection module
+  - `extract_database_dacpac()` - Extract schema from live database using sqlpackage
+  - `compare_database_to_project()` - Compare expected vs actual state
+  - `categorize_drift()` - Classify drift by tolerance level (strict, normal, permissive)
+  - `generate_drift_report()` - Format output as table, JSON, or XML
+  - `generate_repair_migration()` - Auto-generate repair migrations with safety warnings
+- ✅ `drift_command.py` - CLI command implementation with full feature set
+  - `--output` flag for table/JSON/XML formats
+  - `--tolerance` flag for strict/normal/permissive drift categorization
+  - `--fix` flag to generate repair migrations
+  - `--exit-code` flag for CI/CD integration
+  - `--baseline` flag to compare against specific baseline DACPAC
+  - `--dry-run` flag to preview without connecting
+  - `--report-file` flag to save detailed reports
+- ✅ Integration with `dbctl migrate --validate-drift` command
+  - Blocks migrations when unacceptable drift detected
+  - `--force` flag to override drift check
+  - Clear error messages with drift remediation suggestions
+- ✅ Comprehensive test suite: [test-drift.sh](../test-drift.sh) (17 tests)
+  - Basic drift detection tests
+  - Tolerance level tests
+  - Repair migration generation tests
+  - Report saving and output format tests
+  - Dry-run mode tests
+  - Migrate integration tests
+- ✅ Safety features:
+  - DROP statements commented out in repair migrations (manual review required)
+  - Template DOWN migrations for complex rollbacks
+  - Acceptable drift patterns (performance indexes, statistics)
+  - Exit codes for scripting (0=no drift, 1=drift detected, 2=error)
+
+### Key Technical Decisions
+
+- **sqlpackage Extract**: Used `/SourceConnectionString` with `TrustServerCertificate=True` for self-signed cert support
+- **Tolerance Levels**: Three levels implemented - strict (any change is drift), normal (allows perf indexes/stats), permissive (also allows extended properties)
+- **Safety-First Repairs**: DROP operations commented out by default, requiring manual review before execution
+- **CI/CD Ready**: `--exit-code` flag returns non-zero when drift detected, perfect for pipeline integration
+- **Reused Patterns**: Leveraged Epic 1's DACPAC comparison, Epic 2's sqlcmd execution, Epic 3's safety patterns
 
 ---
 
@@ -332,18 +375,18 @@ Develop a turn-key solution for managing MSSQL databases from development to pro
 - ✅ All operations run in containers
 - ✅ 47/47 tests passing (100% coverage)
 
-### Phase 2: Quality & Confidence 🔄 IN PROGRESS
+### Phase 2: Quality & Confidence ✅ COMPLETE
 **Goal:** Build trust through testing, rollback, and drift detection
 
 - ✅ Epic 3: Rollback Support (Complete - 2026-01-30)
 - 📋 Epic 3: Testing Framework (Deferred)
-- 📋 Epic 4: Environment Drift Detection
+- ✅ Epic 4: Environment Drift Detection (Complete - 2026-01-31)
 
 **Success Criteria:**
 - ✅ Rollback support with `.down.sql` execution
-- 📋 Comprehensive test suite runs automatically (deferred)
-- 📋 Drift detection identifies environment discrepancies
-- ✅ Confidence in deployment quality (rollback safety established)
+- 📋 Comprehensive test suite runs automatically (deferred to future)
+- ✅ Drift detection identifies environment discrepancies
+- ✅ Confidence in deployment quality (rollback safety + drift detection established)
 
 ### Phase 3: Polish & Scale
 **Goal:** Production-ready solution
@@ -361,21 +404,22 @@ Develop a turn-key solution for managing MSSQL databases from development to pro
 
 ## Current Status
 
-**Active Epic:** Epic 4 - Environment Drift Detection (or Epic 3 Testing Framework)
+**Active Epic:** None (Phase 2 Complete!)
 
 **Completed Epics:**
 - ✅ Epic 0: Container Infrastructure (2026-01-27)
 - ✅ Epic 1: Migration Generation System (2026-01-27)
 - ✅ Epic 2: Migration Execution & Tracking (2026-01-28)
 - ✅ Epic 3: Rollback Support (2026-01-30)
+- ✅ Epic 4: Environment Drift Detection (2026-01-31)
 
-**Phase 1 & Rollback Complete!** All core migration lifecycle features implemented with 65/65 tests passing.
+**Phase 1 & Phase 2 Complete!** All core migration lifecycle features implemented including generation, execution, rollback, and drift detection. Test coverage: 82 total tests (65 migration tests + 17 drift detection tests). Run with `./test.sh`.
 
 **Next Steps:**
-1. Choose next epic to tackle:
-   - **Option A:** Epic 4 - Environment Drift Detection (detect schema differences between environments)
-   - **Option B:** Epic 3 - Testing Framework (formalize test framework with `dbctl test` command)
-   - **Option C:** Epic 5 - Developer Experience improvements (better documentation, error messages)
+1. Choose next epic to tackle (Phase 3):
+   - **Option A:** Epic 3 - Testing Framework (formalize test framework with `dbctl test` command)
+   - **Option B:** Epic 5 - Developer Experience improvements (better documentation, error messages, onboarding)
+   - **Option C:** Epic 6 - CI/CD & Ephemeral Environments (GitHub Actions, PR databases)
 
 ---
 
@@ -430,6 +474,24 @@ Develop a turn-key solution for managing MSSQL databases from development to pro
 - **Reuse proven patterns**: Leveraged Epic 2's sqlcmd execution pattern, lock mechanism, and SQL cleaning logic for consistency.
 - **Reverse chronological order**: Always rollback most recent migrations first to prevent dependency violations.
 - **Template detection**: Identify `.down.sql` files with TODO markers that require manual implementation before rollback.
+
+### 2026-01-31: Epic 4 Completion - Environment Drift Detection
+- ✅ Implemented `dbctl drift` command with comprehensive feature set
+- ✅ Created `drift_detector.py` core module with DACPAC extraction and comparison
+- ✅ Tolerance levels: strict, normal (default), permissive for acceptable drift
+- ✅ Multiple output formats: table, JSON, XML
+- ✅ Repair migration generation with `--fix` flag
+- ✅ Integration with `dbctl migrate --validate-drift` to block deployments on drift
+- ✅ CI/CD ready with `--exit-code` flag
+- ✅ 17 integration tests in test-drift.sh
+
+**Key Technical Decisions:**
+- **sqlpackage Extract with connection string**: Used `/SourceConnectionString` with `TrustServerCertificate=True` for self-signed cert support (not individual server/database params which don't support TrustServerCertificate).
+- **Three tolerance levels**: Strict (any change is drift), normal (allows performance indexes/statistics), permissive (also allows extended properties).
+- **Safety-first repairs**: DROP operations automatically commented out in generated repair migrations, requiring manual review before execution.
+- **Audit trail focus**: No drift history table initially - keep it simple with file-based reports.
+- **Reuse existing patterns**: Leveraged Epic 1's DACPAC comparison, Epic 2's sqlcmd execution, Epic 3's safety-first approach (--force flags, dry-run).
+- **Exit codes for CI**: 0=no drift, 1=drift detected, 2=error - perfect for pipeline integration.
 
 ### Questions to Resolve
 - [x] ~~Specific CLI naming convention~~ → Resolved: `dbctl` (database control)

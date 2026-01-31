@@ -1,7 +1,7 @@
 -- =============================================
--- Migration: 20260130040656_add_last_inspected_column
--- Generated: 2026-01-30T04:06:56.425560
--- Baseline DACPAC: eeb2b36b3098
+-- Migration: 20260131032108_add_last_inspected_column
+-- Generated: 2026-01-31T03:21:08.895621
+-- Baseline DACPAC: 291747d607c1
 -- Checksum: 0b303a893e43d45899f741ae7ad80c2e366839cbdbf970c763403358cdb52109
 -- =============================================
 
