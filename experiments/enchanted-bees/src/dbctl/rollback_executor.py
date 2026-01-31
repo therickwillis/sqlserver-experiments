@@ -3,7 +3,6 @@ Rollback executor - Discover, validate, and execute rollback (.down.sql) scripts
 """
 
 import pyodbc
-import subprocess
 import time
 import os
 from pathlib import Path
@@ -16,7 +15,7 @@ from .migration_tracker import (
     acquire_migration_lock,
     release_migration_lock
 )
-from .migration_executor import read_migration_sql
+from .migration_executor import read_migration_sql, _execute_sql_via_pyodbc
 
 
 def discover_down_migrations(migrations_dir: Path) -> List[Dict]:
@@ -125,7 +124,7 @@ def execute_rollback(
     down_file_path: Path
 ) -> Tuple[bool, Optional[str], int]:
     """
-    Execute a single rollback script using sqlcmd
+    Execute a single rollback script via pyodbc
 
     Args:
         conn: Active database connection (used only for recording rollback)
@@ -156,38 +155,14 @@ def execute_rollback(
     start_time = time.time()
 
     try:
-        # Execute via sqlcmd subprocess
-        result = subprocess.run(
-            [
-                'sqlcmd',
-                '-S', target_server,
-                '-U', user,
-                '-P', password,
-                '-d', database,
-                '-b',  # Abort batch on error
-                '-C',  # Trust server certificate
-            ],
-            input=sql,
-            capture_output=True,
-            text=True,
-            timeout=300  # 5 minute timeout
-        )
+        _execute_sql_via_pyodbc(sql, target_server, database, user, password)
 
         execution_time_ms = int((time.time() - start_time) * 1000)
-
-        # Check if execution succeeded
-        if result.returncode != 0:
-            error_output = result.stderr if result.stderr else result.stdout
-            return False, f"Rollback failed: {error_output}", execution_time_ms
 
         # Record successful rollback
         record_rollback(conn, migration_id, execution_time_ms)
 
         return True, None, execution_time_ms
-
-    except subprocess.TimeoutExpired:
-        execution_time_ms = int((time.time() - start_time) * 1000)
-        return False, "Rollback timed out after 5 minutes", execution_time_ms
 
     except Exception as e:
         execution_time_ms = int((time.time() - start_time) * 1000)

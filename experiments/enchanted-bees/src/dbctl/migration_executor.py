@@ -3,7 +3,7 @@ Migration executor - Discover, validate, and execute migration scripts
 """
 
 import pyodbc
-import subprocess
+import re
 import time
 import os
 from pathlib import Path
@@ -11,6 +11,7 @@ from typing import List, Dict, Tuple, Optional
 from .migration_tracker import (
     calculate_file_checksum,
     get_applied_migrations,
+    get_connection_string,
     is_migration_applied,
     validate_migration_checksum,
     record_migration,
@@ -159,13 +160,59 @@ def read_migration_sql(file_path: Path) -> str:
     return content
 
 
+def _split_sql_batches(sql: str) -> List[str]:
+    """
+    Split SQL script on GO batch separators.
+
+    GO must appear on its own line (with optional whitespace).
+
+    Args:
+        sql: Full SQL script content
+
+    Returns:
+        List of SQL batch strings (empty batches excluded)
+    """
+    batches = re.split(r'^\s*GO\s*$', sql, flags=re.MULTILINE | re.IGNORECASE)
+    return [b.strip() for b in batches if b.strip()]
+
+
+def _execute_sql_via_pyodbc(sql: str, server: str, database: str, user: str, password: str) -> None:
+    """
+    Execute a SQL script (with GO batch separators) via pyodbc.
+
+    Creates a dedicated autocommit connection so that scripts which manage
+    their own transactions work correctly.
+
+    Args:
+        sql: SQL script content (may contain GO separators)
+        server: Server connection string (host,port)
+        database: Target database name
+        user: SQL login username
+        password: SQL login password
+
+    Raises:
+        Exception on any execution error
+    """
+    conn_str = get_connection_string(server, database, user, password)
+    exec_conn = pyodbc.connect(conn_str, autocommit=True)
+    try:
+        cursor = exec_conn.cursor()
+        try:
+            for batch in _split_sql_batches(sql):
+                cursor.execute(batch)
+        finally:
+            cursor.close()
+    finally:
+        exec_conn.close()
+
+
 def execute_migration(
     conn: pyodbc.Connection,
     migration: Dict,
     transactional: bool = True
 ) -> Tuple[bool, Optional[str], int]:
     """
-    Execute a single migration script using sqlcmd
+    Execute a single migration script via pyodbc
 
     Args:
         conn: Active database connection (used only for recording migration)
@@ -198,39 +245,14 @@ def execute_migration(
     start_time = time.time()
 
     try:
-        # Execute migration using sqlcmd
-        # The script manages its own transactions, so we just execute it as-is
-        result = subprocess.run(
-            [
-                'sqlcmd',
-                '-S', target_server,
-                '-U', user,
-                '-P', password,
-                '-d', database,
-                '-b',  # Abort batch on error
-                '-C',  # Trust server certificate
-            ],
-            input=sql,
-            capture_output=True,
-            text=True,
-            timeout=300  # 5 minute timeout
-        )
+        _execute_sql_via_pyodbc(sql, target_server, database, user, password)
 
         execution_time_ms = int((time.time() - start_time) * 1000)
-
-        if result.returncode != 0:
-            # Migration failed
-            error_output = result.stderr if result.stderr else result.stdout
-            return False, f"Migration failed: {error_output}", execution_time_ms
 
         # Migration succeeded - record it in __MigrationsHistory
         record_migration(conn, migration_id, checksum, execution_time_ms)
 
         return True, None, execution_time_ms
-
-    except subprocess.TimeoutExpired:
-        execution_time_ms = int((time.time() - start_time) * 1000)
-        return False, "Migration timed out after 5 minutes", execution_time_ms
 
     except Exception as e:
         execution_time_ms = int((time.time() - start_time) * 1000)

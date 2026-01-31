@@ -99,7 +99,29 @@ cleanup_test_artifacts() {
 
     # Drop and recreate database to ensure clean state
     print_info "Resetting database..."
-    docker compose exec -T sqlserver sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd' -Q "IF EXISTS (SELECT name FROM sys.databases WHERE name = 'EnchantedBeesDB') DROP DATABASE EnchantedBeesDB" -C > /dev/null 2>&1
+    python3 << 'PYEOF'
+import pyodbc, os, sys
+try:
+    server = os.environ.get('DB_SERVER', 'sqlserver')
+    user = os.environ.get('DB_USER', 'sa')
+    password = os.environ.get('DB_PASSWORD', '')
+    driver = 'FreeTDS' if 'FreeTDS' in pyodbc.drivers() else [d for d in pyodbc.drivers() if 'SQL Server' in d][0]
+    extra = 'PORT=1433;TDS_Version=7.4;Encrypt=no;' if driver == 'FreeTDS' else 'TrustServerCertificate=yes;'
+    conn = pyodbc.connect(
+        f'DRIVER={{{driver}}};SERVER={server};DATABASE=master;UID={user};PWD={password};{extra}',
+        autocommit=True
+    )
+    conn.execute("""
+        IF EXISTS (SELECT name FROM sys.databases WHERE name = N'EnchantedBeesDB')
+        BEGIN
+            ALTER DATABASE [EnchantedBeesDB] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+            DROP DATABASE [EnchantedBeesDB];
+        END
+    """)
+    conn.close()
+except Exception as e:
+    print(f'Database reset note: {e}', file=sys.stderr)
+PYEOF
 
     print_info "Cleanup complete"
     echo

@@ -20,7 +20,8 @@
       "Bash(wc:*)",
       "WebFetch(domain:github.com)",
       "Bash(sqlpackage:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(bash:*)"
     ]
   }
 }
