@@ -21,7 +21,8 @@
       "WebFetch(domain:github.com)",
       "Bash(sqlpackage:*)",
       "Bash(git add:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(git show:*)"
     ]
   }
 }
